@@ -37,11 +37,14 @@ export function BookItemModal({ itemId, category }: { itemId: string; category: 
       {/* Backdrop */}
       {open && (
         <div
-          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center p-4"
-          onClick={(e) => { if (e.target === e.currentTarget) setOpen(false) }}
+          className="fixed inset-0 z-50 bg-slate-950/40 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-300"
+          onClick={() => setOpen(false)}
         >
-          {/* Modal */}
-          <div className="relative z-50 w-full max-w-sm bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden animate-in slide-in-from-bottom-4 sm:slide-in-from-bottom-0 duration-300">
+          {/* Modal Container - stopPropagation to prevent closing when clicking inside */}
+          <div 
+            className="relative w-full max-w-sm bg-white dark:bg-slate-900 rounded-[32px] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.2)] border border-slate-200 dark:border-slate-800 overflow-hidden animate-in zoom-in-95 duration-300"
+            onClick={(e) => e.stopPropagation()}
+          >
             {/* Header */}
             <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-slate-100 dark:border-slate-800">
               <div>

@@ -112,12 +112,23 @@ export function ConfirmReceiptForm({ itemId }: { itemId: string }) {
         />
       </div>
 
+      <div className="space-y-1.5">
+        <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest pl-1">
+          Pesan / Komentar
+        </p>
+        <textarea
+          name="review"
+          placeholder="Tuliskan pesan atau testimoni kamu..."
+          required
+          className="w-full rounded-2xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-sm min-h-[80px] p-4 focus:ring-2 focus:ring-primary/20 transition-all outline-none"
+        />
+      </div>
+
       <Button
         type="submit"
-        variant="secondary"
-        className="w-full rounded-xl gap-2 font-bold"
+        className="w-full rounded-xl h-11 font-bold gap-2 shadow-lg shadow-primary/20 mt-2"
       >
-        <CheckCircle2 className="w-4 h-4" /> Konfirmasi Terima Barang
+        <CheckCircle2 className="w-4 h-4" /> Konfirmasi Terima & Selesai
       </Button>
     </form>
   )

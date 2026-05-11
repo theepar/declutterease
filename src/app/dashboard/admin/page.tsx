@@ -11,15 +11,20 @@ import { DeleteItemButton } from './delete-button'
 import {
   PlusCircle, Package, Users, MapPin, Image as ImageIcon,
   Star, CheckCircle2, TrendingUp, LayoutDashboard, Pencil, Clock, X, Inbox,
+  Search, ArrowRight
 } from 'lucide-react'
+import { createDonationItem, updateDonationItem, deleteDonationItem } from './actions'
+import { CompletedItemDetail } from './completed-item-detail'
 
 export default async function AdminDashboard({
   searchParams,
 }: {
-  searchParams: Promise<{ edit?: string }>
+  searchParams: Promise<{ edit?: string; search?: string; status?: string }>
 }) {
   const resolvedParams = await searchParams
   const editingId = resolvedParams.edit ?? null
+  const search = resolvedParams.search || ''
+  const statusFilter = resolvedParams.status || ''
 
   const cookieStore = await cookies()
   const supabase = await createClient(cookieStore)
@@ -30,6 +35,13 @@ export default async function AdminDashboard({
   if (dbUser?.role !== 'ADMIN') redirect('/dashboard/penerima')
 
   const donations = await prisma.donationItem.findMany({
+    where: {
+      OR: [
+        { category: { contains: search, mode: 'insensitive' } },
+        { description: { contains: search, mode: 'insensitive' } },
+      ],
+      ...(statusFilter ? { status: statusFilter as any } : {}),
+    },
     orderBy: { createdAt: 'desc' },
     include: { penerima: true },
   })
@@ -37,69 +49,16 @@ export default async function AdminDashboard({
   const editingItem = editingId ? donations.find((d) => d.id === editingId) ?? null : null
   const availableItems  = donations.filter((i) => i.status === 'AVAILABLE')
   const shippedItems    = donations.filter((i) => i.status === 'SHIPPED')
-  const pendingReview   = donations.filter((i) => i.status === 'RECEIVED')
   const completedItems  = donations.filter((i) => i.status === 'COMPLETED')
 
-  // ─── Server Actions ──────────────────────────────────────────────────────────
 
-  async function createDonationItem(formData: FormData) {
-    'use server'
-    const category = formData.get('category') as string
-    const condition = formData.get('condition') as string
-    const description = formData.get('description') as string
-    const photoFile = formData.get('photoFile') as File | null
-    let photos: string[] = []
-    if (photoFile && photoFile.size > 0) {
-      const b64 = Buffer.from(await photoFile.arrayBuffer()).toString('base64')
-      photos = [`data:${photoFile.type};base64,${b64}`]
-    }
-    await prisma.donationItem.create({
-      data: { category, condition, description, photos, status: 'AVAILABLE' },
-    })
-    revalidatePath('/dashboard/admin')
-  }
 
-  async function updateDonationItem(formData: FormData) {
-    'use server'
-    const itemId = formData.get('itemId') as string
-    const category = formData.get('category') as string
-    const condition = formData.get('condition') as string
-    const description = formData.get('description') as string
-    const photoFile = formData.get('photoFile') as File | null
-    const existingPhoto = formData.get('existingPhoto') as string
-    let photos: string[] = existingPhoto ? [existingPhoto] : []
-    if (photoFile && photoFile.size > 0) {
-      const b64 = Buffer.from(await photoFile.arrayBuffer()).toString('base64')
-      photos = [`data:${photoFile.type};base64,${b64}`]
-    }
-    await prisma.donationItem.update({ where: { id: itemId }, data: { category, condition, description, photos } })
-    redirect('/dashboard/admin')
-  }
-
-  async function deleteDonationItem(formData: FormData) {
-    'use server'
-    const itemId = formData.get('itemId') as string
-    await prisma.donationItem.delete({ where: { id: itemId } })
-    revalidatePath('/dashboard/admin')
-  }
-
-  async function addReview(formData: FormData) {
-    'use server'
-    const itemId = formData.get('itemId') as string
-    const review = formData.get('review') as string
-    await prisma.donationItem.update({
-      where: { id: itemId },
-      data: { status: 'COMPLETED', review },
-    })
-    revalidatePath('/dashboard/admin')
-  }
-
-  // ─── Render ──────────────────────────────────────────────────────────────────
+  // --- Render ---
 
   return (
     <div className="max-w-7xl mx-auto space-y-10 pb-24">
 
-      {/* ── Banner ─────────────────────────────────────────────────────── */}
+      {/* --- Banner --- */}
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-5 sm:p-8 shadow-2xl">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary/20 via-transparent to-transparent pointer-events-none" />
         <div className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-8">
@@ -110,23 +69,29 @@ export default async function AdminDashboard({
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight text-white">Admin Dashboard</h1>
             <p className="text-slate-400 text-sm mt-1">Kelola inventaris donasi DeclutterEase</p>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 shrink-0">
-            {[
-              { label: 'Tersedia', val: availableItems.length, color: 'text-sky-400', bg: 'bg-sky-400/10' },
-              { label: 'Booked', val: shippedItems.length, color: 'text-amber-400', bg: 'bg-amber-400/10' },
-              { label: 'Review', val: pendingReview.length, color: 'text-purple-400', bg: 'bg-purple-400/10' },
-              { label: 'Selesai', val: completedItems.length, color: 'text-green-400', bg: 'bg-green-400/10' },
-            ].map((s) => (
-              <div key={s.label} className={`${s.bg} border border-white/5 rounded-2xl px-4 py-3 text-center backdrop-blur-sm`}>
-                <div className={`text-2xl font-black ${s.color}`}>{s.val}</div>
-                <div className="text-[10px] text-slate-400 font-semibold uppercase tracking-widest mt-0.5">{s.label}</div>
-              </div>
-            ))}
+          <div className="flex flex-col gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 shrink-0">
+                {[
+                  { label: 'Tersedia', val: availableItems.length, color: 'text-sky-400', bg: 'bg-sky-400/10' },
+                  { label: 'Booked', val: shippedItems.length, color: 'text-amber-400', bg: 'bg-amber-400/10' },
+                  { label: 'Selesai', val: completedItems.length, color: 'text-green-400', bg: 'bg-green-400/10' },
+                ].map((s) => (
+                  <div key={s.label} className={`${s.bg} border border-white/5 rounded-2xl px-4 py-3 text-center backdrop-blur-sm`}>
+                    <div className={`text-2xl font-black ${s.color}`}>{s.val}</div>
+                    <div className="text-[10px] text-slate-400 font-semibold uppercase tracking-widest mt-0.5">{s.label}</div>
+                  </div>
+                ))}
+            </div>
+            <a href="/dashboard/penerima">
+              <Button variant="outline" className="w-full rounded-2xl bg-white/5 border-white/10 text-white hover:bg-white/10 gap-2 border-dashed">
+                Lihat POV Penerima <ArrowRight className="w-4 h-4" />
+              </Button>
+            </a>
           </div>
         </div>
       </div>
 
-      {/* ── Main Grid ──────────────────────────────────────────────────── */}
+      {/* --- Main Grid --- */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
 
         {/* Left — Form Panel */}
@@ -214,83 +179,41 @@ export default async function AdminDashboard({
         {/* Right — Lists */}
         <div className="lg:col-span-8 space-y-10">
 
-          {/* ── Pending Review ─────────────────────────────────────────── */}
-          {pendingReview.length > 0 && (
-            <section className="space-y-5">
-              <SectionHeader
-                icon={<Star className="w-4 h-4 text-purple-500 fill-purple-500/30" />}
-                iconBg="bg-purple-50 dark:bg-purple-900/20"
-                title="Menunggu Review"
-                badge={`${pendingReview.length} item`}
-                badgeColor="bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400"
-                pulse
-              />
-              <div className="space-y-5">
-                {pendingReview.map((item) => (
-                  <div key={item.id} className="bg-white dark:bg-slate-900 rounded-3xl border border-purple-200/50 dark:border-purple-900/30 overflow-hidden shadow-lg shadow-purple-500/5">
-                    <div className="flex flex-col md:flex-row">
-                      <div className="md:w-56 h-56 bg-slate-100 dark:bg-slate-800 shrink-0 relative">
-                        {item.receiptPhoto ? (
-                          <img src={item.receiptPhoto} alt="Tanda Terima" className="w-full h-full object-cover" />
-                        ) : (
-                          <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-slate-300">
-                            <ImageIcon className="w-10 h-10" />
-                            <span className="text-xs font-medium">Belum ada foto</span>
-                          </div>
-                        )}
-                        <div className="absolute top-2 left-2">
-                          <span className="bg-purple-600 text-white text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full">Penerima Upload</span>
-                        </div>
-                      </div>
-                      <div className="flex-1 p-5 flex flex-col justify-between gap-4">
-                        <div className="space-y-2">
-                          <h3 className="text-lg font-bold text-slate-900 dark:text-white">{item.category}</h3>
-                          <div className="flex items-center gap-2 text-sm text-slate-500">
-                            <Users className="w-3.5 h-3.5 shrink-0" />
-                            <span>Penerima: <span className="font-semibold text-slate-800 dark:text-slate-200">{item.penerima?.name}</span></span>
-                          </div>
-                          {item.receiptLocation && (
-                            <div className="flex items-start gap-2 text-sm text-slate-500">
-                              <MapPin className="w-3.5 h-3.5 shrink-0 mt-0.5 text-red-400" />
-                              <span className="italic leading-snug">{item.receiptLocation}</span>
-                            </div>
-                          )}
-                        </div>
-                        <div className="bg-slate-50 dark:bg-slate-950/60 rounded-2xl p-4 border border-slate-100 dark:border-slate-800">
-                          <form action={addReview} className="space-y-3">
-                            <input type="hidden" name="itemId" value={item.id} />
-                            <Label htmlFor={`review-${item.id}`} className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                              Catatan Penyelesaian
-                            </Label>
-                            <Textarea
-                              id={`review-${item.id}`}
-                              name="review"
-                              placeholder="Barang sudah terkonfirmasi diterima dengan baik..."
-                              required
-                              className="rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-sm min-h-[80px]"
-                            />
-                            <Button type="submit" className="w-full rounded-xl h-11 font-bold gap-2 shadow-lg shadow-primary/20">
-                              <CheckCircle2 className="w-4 h-4" /> Selesaikan Donasi
-                            </Button>
-                          </form>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
 
-          {/* ── All Inventory ───────────────────────────────────────────── */}
+          {/* --- All Inventory --- */}
           <section className="space-y-5">
-            <SectionHeader
-              icon={<Package className="w-4 h-4 text-primary" />}
-              iconBg="bg-primary/10"
-              title="Semua Inventaris"
-              badge={`${donations.length} items`}
-              badgeColor="bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
-            />
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <SectionHeader
+                icon={<Package className="w-4 h-4 text-primary" />}
+                iconBg="bg-primary/10"
+                title="Semua Inventaris"
+                badge={`${donations.length} items`}
+                badgeColor="bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
+              />
+              
+              <div className="flex items-center gap-2">
+                <form action="" className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+                  <Input 
+                    name="search" 
+                    defaultValue={search}
+                    placeholder="Cari..." 
+                    className="h-9 w-40 pl-8 rounded-xl text-xs border-slate-200 dark:border-slate-800" 
+                  />
+                </form>
+                <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
+                  {['', 'AVAILABLE', 'SHIPPED', 'COMPLETED'].map((s) => (
+                    <a 
+                      key={s} 
+                      href={`/dashboard/admin?status=${s}&search=${search}`}
+                      className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all ${statusFilter === s ? 'bg-white dark:bg-slate-900 shadow-sm text-primary' : 'text-slate-500 hover:text-slate-700'}`}
+                    >
+                      {s === '' ? 'Semua' : s === 'AVAILABLE' ? 'Tersedia' : s === 'SHIPPED' ? 'Booked' : 'Selesai'}
+                    </a>
+                  ))}
+                </div>
+              </div>
+            </div>
 
             {donations.length === 0 ? (
               <div className="bg-white dark:bg-slate-900 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-3xl p-16 text-center">
@@ -357,7 +280,7 @@ export default async function AdminDashboard({
             )}
           </section>
 
-          {/* ── Completed ───────────────────────────────────────────────── */}
+          {/* --- Completed --- */}
           {completedItems.length > 0 && (
             <section className="space-y-5">
               <SectionHeader
@@ -369,7 +292,7 @@ export default async function AdminDashboard({
               />
               <div className="space-y-3">
                 {completedItems.map((item) => (
-                  <div key={item.id} className="bg-white dark:bg-slate-900 rounded-2xl border border-green-100 dark:border-green-900/30 px-5 py-4 flex items-center gap-4">
+                  <div key={item.id} className="bg-white dark:bg-slate-900 rounded-2xl border border-green-100 dark:border-green-900/30 px-5 py-4 flex items-center gap-4 group">
                     <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 overflow-hidden shrink-0">
                       {item.photos[0] ? (
                         <img src={item.photos[0]} alt="" className="w-full h-full object-cover" />
@@ -379,10 +302,19 @@ export default async function AdminDashboard({
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-slate-800 dark:text-slate-200 text-sm">{item.category}</p>
-                      {item.review && <p className="text-xs text-slate-500 italic truncate mt-0.5">"{item.review}"</p>}
+                      <div className="flex items-center gap-1.5 text-xs text-slate-400 mt-0.5">
+                        <Users className="w-3 h-3" />
+                        <span>{item.penerima?.name}</span>
+                        {item.review && (
+                          <>
+                            <span>·</span>
+                            <span className="italic truncate">"{item.review}"</span>
+                          </>
+                        )}
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1.5 text-xs text-slate-400 shrink-0">
-                      <Users className="w-3 h-3" />{item.penerima?.name}
+                    <div className="shrink-0">
+                      <CompletedItemDetail item={item} />
                     </div>
                   </div>
                 ))}
@@ -395,7 +327,7 @@ export default async function AdminDashboard({
   )
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+// --- Helpers ---
 
 function FormField({ label, id, children }: { label: string; id: string; children: React.ReactNode }) {
   return (

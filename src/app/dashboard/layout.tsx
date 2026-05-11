@@ -64,7 +64,7 @@ export default async function DashboardLayout({
               <Link href="/dashboard/penerima">
                 <Button variant="ghost" size="sm" className="rounded-full text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white gap-2 font-medium">
                   <Package className="w-4 h-4" />
-                  Katalog
+                  Penerima
                 </Button>
               </Link>
             </nav>
