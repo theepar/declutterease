@@ -38,7 +38,7 @@ export default async function PenerimaDashboard() {
       penerimaId: user.id,
       status: { in: ['SHIPPED', 'RECEIVED', 'COMPLETED'] },
     },
-    orderBy: { bookedAt: 'desc' },
+    orderBy: { createdAt: 'desc' },
   })
 
   async function bookItem(formData: FormData) {
