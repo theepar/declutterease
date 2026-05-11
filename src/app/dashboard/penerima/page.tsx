@@ -2,16 +2,13 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/utils/supabase/server'
 import { cookies } from 'next/headers'
 import { prisma } from '@/lib/prisma'
-import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { revalidatePath } from 'next/cache'
+import { ConfirmReceiptForm } from './confirm-receipt-form'
+import { CancelBookingButton } from './cancel-booking-button'
+import { bookItem } from './actions'
 import {
   Package,
-  MapPin,
-  Camera,
-  CheckCircle2,
   Clock,
   ShoppingBag,
   Tag,
@@ -40,52 +37,6 @@ export default async function PenerimaDashboard() {
     },
     orderBy: { createdAt: 'desc' },
   })
-
-  async function bookItem(formData: FormData) {
-    'use server'
-    const itemId = formData.get('itemId') as string
-    const cs = await cookies()
-    const sb = await createClient(cs)
-    const { data: { user } } = await sb.auth.getUser()
-    if (!user) return
-
-    await prisma.donationItem.update({
-      where: { id: itemId, status: 'AVAILABLE' },
-      data: {
-        status: 'SHIPPED',
-        penerimaId: user.id,
-        bookedAt: new Date(),
-      },
-    })
-    revalidatePath('/dashboard/penerima')
-  }
-
-  async function confirmReceipt(formData: FormData) {
-    'use server'
-    const itemId = formData.get('itemId') as string
-    const location = formData.get('location') as string
-    const photoFile = formData.get('photoFile') as File | null
-
-    let photoUrl = ''
-    if (photoFile && photoFile.size > 0) {
-      const cs = await cookies()
-      const sb = await createClient(cs)
-      const ext = photoFile.name.split('.').pop()
-      const name = `receipt-${Math.random().toString(36).slice(2)}.${ext}`
-      const { data: up, error: ue } = await sb.storage
-        .from('declutterease')
-        .upload(`receipts/${name}`, photoFile)
-      if (!ue && up) {
-        photoUrl = sb.storage.from('declutterease').getPublicUrl(up.path).data.publicUrl
-      }
-    }
-
-    await prisma.donationItem.update({
-      where: { id: itemId },
-      data: { status: 'RECEIVED', receiptLocation: location, receiptPhoto: photoUrl },
-    })
-    revalidatePath('/dashboard/penerima')
-  }
 
   const initials = dbUser.name
     .split(' ')
@@ -123,15 +74,13 @@ export default async function PenerimaDashboard() {
 
       {/* ── Available Items ────────────────────────────────────────────── */}
       <section className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">
-              <Package className="w-4 h-4 text-primary" />
-            </div>
-            <div>
-              <h2 className="text-xl font-bold text-slate-900 dark:text-white">Barang Tersedia</h2>
-              <p className="text-xs text-slate-500">{availableDonations.length} item siap di-booking</p>
-            </div>
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">
+            <Package className="w-4 h-4 text-primary" />
+          </div>
+          <div>
+            <h2 className="text-xl font-bold text-slate-900 dark:text-white">Barang Tersedia</h2>
+            <p className="text-xs text-slate-500">{availableDonations.length} item siap di-booking</p>
           </div>
         </div>
 
@@ -150,7 +99,6 @@ export default async function PenerimaDashboard() {
                 key={item.id}
                 className="group bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/60 rounded-3xl overflow-hidden shadow-sm hover:shadow-2xl hover:shadow-slate-200/60 dark:hover:shadow-black/40 hover:-translate-y-1 transition-all duration-300"
               >
-                {/* Image */}
                 <div className="relative h-52 w-full overflow-hidden bg-slate-100 dark:bg-slate-800">
                   {item.photos[0] ? (
                     <img
@@ -164,13 +112,11 @@ export default async function PenerimaDashboard() {
                       <span className="text-xs text-slate-400">Tidak ada foto</span>
                     </div>
                   )}
-                  {/* Category pill */}
                   <div className="absolute top-3 left-3">
                     <span className="inline-flex items-center gap-1 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md px-3 py-1 rounded-full text-xs font-bold text-primary shadow-sm border border-slate-100 dark:border-slate-800">
                       <Tag className="w-3 h-3" /> {item.category}
                     </span>
                   </div>
-                  {/* Condition badge */}
                   <div className="absolute top-3 right-3">
                     <span className="bg-green-500/90 text-white text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full">
                       {item.condition}
@@ -178,13 +124,11 @@ export default async function PenerimaDashboard() {
                   </div>
                 </div>
 
-                {/* Info */}
                 <div className="p-5 space-y-4">
                   <div>
                     <h3 className="font-bold text-slate-900 dark:text-white text-lg leading-tight">{item.category}</h3>
                     <p className="text-slate-500 text-sm mt-1 line-clamp-2 leading-relaxed">{item.description}</p>
                   </div>
-
                   <form action={bookItem}>
                     <input type="hidden" name="itemId" value={item.id} />
                     <Button
@@ -250,24 +194,11 @@ export default async function PenerimaDashboard() {
                     </div>
 
                     {item.status === 'SHIPPED' && (
-                      <div className="mt-4 bg-slate-50 dark:bg-slate-950 p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
-                        <form action={confirmReceipt} className="space-y-3">
-                          <input type="hidden" name="itemId" value={item.id} />
-                          <p className="text-xs font-bold uppercase text-slate-500 tracking-wider mb-2">Konfirmasi Penerimaan</p>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            <div className="relative">
-                              <MapPin className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-                              <Input name="location" placeholder="Lokasi penerimaan..." required className="pl-9 rounded-xl border-slate-200 dark:border-slate-800 h-11" />
-                            </div>
-                            <div className="relative">
-                              <Camera className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-                              <Input name="photoFile" type="file" accept="image/*" required className="pl-9 rounded-xl border-slate-200 dark:border-slate-800 h-11 cursor-pointer pt-2.5" />
-                            </div>
-                          </div>
-                          <Button type="submit" variant="secondary" className="w-full rounded-xl gap-2 font-bold">
-                            <CheckCircle2 className="w-4 h-4" /> Konfirmasi Terima Barang
-                          </Button>
-                        </form>
+                      <div className="mt-4 space-y-3">
+                        <div className="bg-slate-50 dark:bg-slate-950 p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
+                          <ConfirmReceiptForm itemId={item.id} />
+                        </div>
+                        <CancelBookingButton itemId={item.id} />
                       </div>
                     )}
 

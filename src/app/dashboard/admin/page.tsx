@@ -283,7 +283,7 @@ export default async function AdminDashboard({
                               required
                               className="rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900"
                             />
-                            <Button size="sm" className="w-full rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold gap-2">
+                            <Button type="submit" size="sm" className="w-full rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold gap-2">
                               Selesaikan Donasi <CheckCircle2 className="w-4 h-4" />
                             </Button>
                           </form>
