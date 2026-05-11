@@ -2,22 +2,18 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/utils/supabase/server'
 import { cookies } from 'next/headers'
 import { prisma } from '@/lib/prisma'
-import { Button } from '@/components/ui/button'
-import { revalidatePath } from 'next/cache'
 import { ConfirmReceiptForm } from './confirm-receipt-form'
 import { CancelBookingButton } from './cancel-booking-button'
 import { BookItemModal } from './book-item-modal'
+import Image from 'next/image'
 import {
   Package,
   Clock,
   Tag,
-  Sparkles,
   Search,
-  Filter,
   Calendar,
   CheckCircle2,
   ShoppingBag,
-  ArrowRight,
 } from 'lucide-react'
 
 export default async function PenerimaDashboard({
@@ -130,7 +126,12 @@ export default async function PenerimaDashboard({
                 <div className="flex flex-col lg:flex-row">
                   <div className="w-full lg:w-72 h-56 lg:h-auto bg-slate-100 dark:bg-slate-800 shrink-0 relative overflow-hidden">
                     {item.photos[0] ? (
-                      <img src={item.photos[0]} alt={item.category} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                      <Image 
+                        src={item.photos[0]} 
+                        alt={item.category} 
+                        fill
+                        className="object-cover transition-transform duration-700 group-hover:scale-110" 
+                      />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-slate-300 bg-slate-50 dark:bg-slate-950">
                         <Package className="w-12 h-12 opacity-30" />
@@ -179,7 +180,7 @@ export default async function PenerimaDashboard({
                           </div>
                           <div className="space-y-1">
                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Testimoni Kamu:</p>
-                            <p className="text-sm italic text-slate-700 dark:text-slate-300 leading-relaxed">"{item.review || 'Terima kasih!'}"</p>
+                            <p className="text-sm italic text-slate-700 dark:text-slate-300 leading-relaxed">&quot;{item.review || 'Terima kasih!'}&quot;</p>
                           </div>
                         </div>
                       )}
@@ -262,10 +263,11 @@ export default async function PenerimaDashboard({
               >
                 <div className="relative h-64 w-full overflow-hidden bg-slate-100 dark:bg-slate-800">
                   {item.photos[0] ? (
-                    <img
+                    <Image
                       src={item.photos[0]}
                       alt={item.category}
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                      fill
+                      className="object-cover group-hover:scale-110 transition-transform duration-700"
                     />
                   ) : (
                     <div className="w-full h-full flex flex-col items-center justify-center text-slate-300 bg-slate-50 dark:bg-slate-950">
@@ -317,7 +319,12 @@ export default async function PenerimaDashboard({
               <div key={item.id} className="bg-white dark:bg-slate-900 border border-slate-200/50 dark:border-slate-800/50 rounded-2xl p-3 space-y-3 shadow-sm flex flex-col">
                 <div className="aspect-square rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-800 relative">
                   {item.photos[0] ? (
-                    <img src={item.photos[0]} alt={item.category} className="w-full h-full object-cover opacity-60" />
+                    <Image 
+                      src={item.photos[0]} 
+                      alt={item.category} 
+                      fill
+                      className="object-cover opacity-60" 
+                    />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-slate-300"><Package className="w-6 h-6" /></div>
                   )}

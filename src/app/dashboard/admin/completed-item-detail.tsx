@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
+import Image from 'next/image'
 import { 
   X, MapPin, MessageSquare, Image as ImageIcon, 
   Calendar, User, CheckCircle2, Package 
@@ -98,7 +99,7 @@ export function CompletedItemDetail({ item }: CompletedItemDetailProps) {
                   <MessageSquare className="w-3 h-3" /> Testimoni Penerima
                 </p>
                 <p className="text-slate-700 dark:text-slate-300 italic text-sm leading-relaxed">
-                  "{item.review || 'Tidak ada komentar.'}"
+                  &quot;{item.review || 'Tidak ada komentar.'}&quot;
                 </p>
               </div>
 
@@ -108,9 +109,14 @@ export function CompletedItemDetail({ item }: CompletedItemDetailProps) {
                   <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
                     <Package className="w-3 h-3" /> Foto Awal
                   </p>
-                  <div className="aspect-video rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-100 dark:border-slate-800">
+                  <div className="aspect-video rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-100 dark:border-slate-800 relative">
                     {item.photos[0] ? (
-                      <img src={item.photos[0]} alt="Awal" className="w-full h-full object-cover" />
+                      <Image 
+                        src={item.photos[0]} 
+                        alt="Awal" 
+                        fill
+                        className="object-cover" 
+                      />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-slate-300"><ImageIcon className="w-8 h-8" /></div>
                     )}
@@ -120,9 +126,14 @@ export function CompletedItemDetail({ item }: CompletedItemDetailProps) {
                   <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5 text-green-600">
                     <ImageIcon className="w-3 h-3" /> Bukti Foto Terima
                   </p>
-                  <div className="aspect-video rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-800 border-2 border-green-100 dark:border-green-900/30">
+                  <div className="aspect-video rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-800 border-2 border-green-100 dark:border-green-900/30 relative">
                     {item.receiptPhoto ? (
-                      <img src={item.receiptPhoto} alt="Terima" className="w-full h-full object-cover" />
+                      <Image 
+                        src={item.receiptPhoto} 
+                        alt="Terima" 
+                        fill
+                        className="object-cover" 
+                      />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-slate-300"><ImageIcon className="w-8 h-8" /></div>
                     )}

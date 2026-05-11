@@ -6,11 +6,11 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { revalidatePath } from 'next/cache'
+import Image from 'next/image'
 import { DeleteItemButton } from './delete-button'
 import {
-  PlusCircle, Package, Users, MapPin, Image as ImageIcon,
-  Star, CheckCircle2, TrendingUp, LayoutDashboard, Pencil, Clock, X, Inbox,
+  PlusCircle, Package, Users, Image as ImageIcon,
+  CheckCircle2, LayoutDashboard, Pencil, Clock, X, Inbox,
   Search, ArrowRight
 } from 'lucide-react'
 import { createDonationItem, updateDonationItem, deleteDonationItem } from './actions'
@@ -40,7 +40,7 @@ export default async function AdminDashboard({
         { category: { contains: search, mode: 'insensitive' } },
         { description: { contains: search, mode: 'insensitive' } },
       ],
-      ...(statusFilter ? { status: statusFilter as any } : {}),
+      ...(statusFilter ? { status: statusFilter } : {}),
     },
     orderBy: { createdAt: 'desc' },
     include: { penerima: true },
@@ -129,7 +129,14 @@ export default async function AdminDashboard({
                   </FormField>
                   <FormField label="Ganti Foto (opsional)" id="edit-photo">
                     {editingItem.photos[0] && (
-                      <img src={editingItem.photos[0]} alt="" className="w-full h-32 object-cover rounded-xl mb-2" />
+                      <div className="relative w-full h-32 mb-2">
+                        <Image 
+                          src={editingItem.photos[0]} 
+                          alt="" 
+                          fill
+                          className="object-cover rounded-xl" 
+                        />
+                      </div>
                     )}
                     <Input id="edit-photo" name="photoFile" type="file" accept="image/*" className="rounded-xl h-11 cursor-pointer pt-2.5 text-sm" />
                   </FormField>
@@ -230,9 +237,14 @@ export default async function AdminDashboard({
                       className={`px-5 py-4 flex items-center gap-4 hover:bg-slate-50 dark:hover:bg-slate-950/40 transition-colors ${editingId === item.id ? 'bg-amber-50 dark:bg-amber-900/10 border-l-4 border-amber-400' : ''}`}
                     >
                       {/* Thumbnail */}
-                      <div className="w-14 h-14 rounded-2xl bg-slate-100 dark:bg-slate-800 overflow-hidden shrink-0 border border-slate-200 dark:border-slate-700">
+                      <div className="w-14 h-14 rounded-2xl bg-slate-100 dark:bg-slate-800 overflow-hidden shrink-0 border border-slate-200 dark:border-slate-700 relative">
                         {item.photos[0] ? (
-                          <img src={item.photos[0]} alt="" className="w-full h-full object-cover" />
+                          <Image 
+                            src={item.photos[0]} 
+                            alt="" 
+                            fill
+                            className="object-cover" 
+                          />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-slate-300">
                             <Package className="w-6 h-6" />
@@ -293,9 +305,14 @@ export default async function AdminDashboard({
               <div className="space-y-3">
                 {completedItems.map((item) => (
                   <div key={item.id} className="bg-white dark:bg-slate-900 rounded-2xl border border-green-100 dark:border-green-900/30 px-5 py-4 flex items-center gap-4 group">
-                    <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 overflow-hidden shrink-0">
+                    <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 overflow-hidden shrink-0 relative">
                       {item.photos[0] ? (
-                        <img src={item.photos[0]} alt="" className="w-full h-full object-cover" />
+                        <Image 
+                          src={item.photos[0]} 
+                          alt="" 
+                          fill
+                          className="object-cover" 
+                        />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center"><Package className="w-4 h-4 text-slate-300" /></div>
                       )}
@@ -308,7 +325,7 @@ export default async function AdminDashboard({
                         {item.review && (
                           <>
                             <span>·</span>
-                            <span className="italic truncate">"{item.review}"</span>
+                            <span className="italic truncate">&quot;{item.review}&quot;</span>
                           </>
                         )}
                       </div>

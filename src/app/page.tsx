@@ -71,7 +71,7 @@ export default function Home() {
                 How DeclutterEase Works
               </h2>
               <p className="text-slate-500 dark:text-slate-400 max-w-[600px] mx-auto text-lg">
-                We've simplified the donation process so you can focus on what matters: making a positive impact.
+                We&apos;ve simplified the donation process so you can focus on what matters: making a positive impact.
               </p>
             </div>
 
