@@ -57,7 +57,7 @@ export async function signup(formData: FormData) {
           id: authData.user.id,
           email: email,
           name: name || email.split('@')[0],
-          role: 'PENERIMA' // default role
+          role: 'ADMIN' // default role — can access both admin & penerima views
         }
       })
     } catch (e) {
@@ -67,5 +67,5 @@ export async function signup(formData: FormData) {
   }
 
   revalidatePath('/', 'layout')
-  redirect('/dashboard/penerima')
+  redirect('/dashboard/admin')
 }

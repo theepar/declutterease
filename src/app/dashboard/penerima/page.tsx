@@ -6,11 +6,10 @@ import { Button } from '@/components/ui/button'
 import { revalidatePath } from 'next/cache'
 import { ConfirmReceiptForm } from './confirm-receipt-form'
 import { CancelBookingButton } from './cancel-booking-button'
-import { bookItem } from './actions'
+import { BookItemModal } from './book-item-modal'
 import {
   Package,
   Clock,
-  ShoppingBag,
   Tag,
   Sparkles,
 } from 'lucide-react'
@@ -48,7 +47,7 @@ export default async function PenerimaDashboard() {
   return (
     <div className="max-w-6xl mx-auto space-y-12 pb-20">
       {/* ── Hero greeting ─────────────────────────────────────────────── */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 to-slate-800 dark:from-slate-800 dark:to-slate-900 p-8 shadow-2xl shadow-slate-900/20">
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 to-slate-800 dark:from-slate-800 dark:to-slate-900 p-5 sm:p-8 shadow-2xl shadow-slate-900/20">
         <div className="absolute top-0 right-0 w-72 h-72 bg-primary/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
         <div className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-6">
           <div>
@@ -58,7 +57,7 @@ export default async function PenerimaDashboard() {
               </div>
               <div>
                 <p className="text-slate-400 text-sm font-medium">Selamat datang,</p>
-                <h1 className="text-2xl font-extrabold text-white tracking-tight">{dbUser.name}</h1>
+                <h1 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">{dbUser.name}</h1>
               </div>
             </div>
             <p className="text-slate-400 text-sm max-w-sm">
@@ -129,16 +128,7 @@ export default async function PenerimaDashboard() {
                     <h3 className="font-bold text-slate-900 dark:text-white text-lg leading-tight">{item.category}</h3>
                     <p className="text-slate-500 text-sm mt-1 line-clamp-2 leading-relaxed">{item.description}</p>
                   </div>
-                  <form action={bookItem}>
-                    <input type="hidden" name="itemId" value={item.id} />
-                    <Button
-                      type="submit"
-                      className="w-full rounded-2xl h-11 font-bold gap-2 shadow-md shadow-primary/20 transition-all active:scale-95"
-                    >
-                      <ShoppingBag className="w-4 h-4" />
-                      Booking Sekarang
-                    </Button>
-                  </form>
+                  <BookItemModal itemId={item.id} category={item.category} />
                 </div>
               </div>
             ))}
@@ -169,7 +159,7 @@ export default async function PenerimaDashboard() {
             {myBookings.map((item) => (
               <div key={item.id} className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/60 rounded-3xl overflow-hidden shadow-sm">
                 <div className="flex flex-col md:flex-row">
-                  <div className="w-full md:w-44 h-44 bg-slate-100 dark:bg-slate-800 shrink-0">
+                  <div className="w-full md:w-44 h-36 md:h-44 bg-slate-100 dark:bg-slate-800 shrink-0">
                     {item.photos[0] ? (
                       <img src={item.photos[0]} alt={item.category} className="w-full h-full object-cover" />
                     ) : (

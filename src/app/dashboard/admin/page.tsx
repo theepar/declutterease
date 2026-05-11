@@ -2,7 +2,6 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/utils/supabase/server'
 import { cookies } from 'next/headers'
 import { prisma } from '@/lib/prisma'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -10,18 +9,8 @@ import { Textarea } from '@/components/ui/textarea'
 import { revalidatePath } from 'next/cache'
 import { DeleteItemButton } from './delete-button'
 import {
-  PlusCircle,
-  Package,
-  Users,
-  MapPin,
-  Image as ImageIcon,
-  Star,
-  CheckCircle2,
-  TrendingUp,
-  LayoutDashboard,
-  Pencil,
-  Clock,
-  X,
+  PlusCircle, Package, Users, MapPin, Image as ImageIcon,
+  Star, CheckCircle2, TrendingUp, LayoutDashboard, Pencil, Clock, X, Inbox,
 } from 'lucide-react'
 
 export default async function AdminDashboard({
@@ -34,7 +23,6 @@ export default async function AdminDashboard({
 
   const cookieStore = await cookies()
   const supabase = await createClient(cookieStore)
-
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
@@ -46,16 +34,13 @@ export default async function AdminDashboard({
     include: { penerima: true },
   })
 
-  const editingItem = editingId
-    ? donations.find((d) => d.id === editingId) ?? null
-    : null
+  const editingItem = editingId ? donations.find((d) => d.id === editingId) ?? null : null
+  const availableItems  = donations.filter((i) => i.status === 'AVAILABLE')
+  const shippedItems    = donations.filter((i) => i.status === 'SHIPPED')
+  const pendingReview   = donations.filter((i) => i.status === 'RECEIVED')
+  const completedItems  = donations.filter((i) => i.status === 'COMPLETED')
 
-  const availableItems = donations.filter((i) => i.status === 'AVAILABLE')
-  const shippedItems = donations.filter((i) => i.status === 'SHIPPED')
-  const pendingReview = donations.filter((i) => i.status === 'RECEIVED')
-  const completedItems = donations.filter((i) => i.status === 'COMPLETED')
-
-  // ─── Server Actions ─────────────────────────────────────────────────────────
+  // ─── Server Actions ──────────────────────────────────────────────────────────
 
   async function createDonationItem(formData: FormData) {
     'use server'
@@ -63,14 +48,11 @@ export default async function AdminDashboard({
     const condition = formData.get('condition') as string
     const description = formData.get('description') as string
     const photoFile = formData.get('photoFile') as File | null
-
     let photos: string[] = []
     if (photoFile && photoFile.size > 0) {
-      const bytes = await photoFile.arrayBuffer()
-      const b64 = Buffer.from(bytes).toString('base64')
+      const b64 = Buffer.from(await photoFile.arrayBuffer()).toString('base64')
       photos = [`data:${photoFile.type};base64,${b64}`]
     }
-
     await prisma.donationItem.create({
       data: { category, condition, description, photos, status: 'AVAILABLE' },
     })
@@ -85,18 +67,12 @@ export default async function AdminDashboard({
     const description = formData.get('description') as string
     const photoFile = formData.get('photoFile') as File | null
     const existingPhoto = formData.get('existingPhoto') as string
-
     let photos: string[] = existingPhoto ? [existingPhoto] : []
     if (photoFile && photoFile.size > 0) {
-      const bytes = await photoFile.arrayBuffer()
-      const b64 = Buffer.from(bytes).toString('base64')
+      const b64 = Buffer.from(await photoFile.arrayBuffer()).toString('base64')
       photos = [`data:${photoFile.type};base64,${b64}`]
     }
-
-    await prisma.donationItem.update({
-      where: { id: itemId },
-      data: { category, condition, description, photos },
-    })
+    await prisma.donationItem.update({ where: { id: itemId }, data: { category, condition, description, photos } })
     redirect('/dashboard/admin')
   }
 
@@ -118,302 +94,349 @@ export default async function AdminDashboard({
     revalidatePath('/dashboard/admin')
   }
 
-  // ─── Render ─────────────────────────────────────────────────────────────────
+  // ─── Render ──────────────────────────────────────────────────────────────────
 
   return (
-    <div className="max-w-7xl mx-auto space-y-10 pb-20">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div>
-          <div className="flex items-center gap-2 text-primary mb-1 font-bold tracking-wider text-xs uppercase">
-            <LayoutDashboard className="w-4 h-4" /> Management Console
+    <div className="max-w-7xl mx-auto space-y-10 pb-24">
+
+      {/* ── Banner ─────────────────────────────────────────────────────── */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-5 sm:p-8 shadow-2xl">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary/20 via-transparent to-transparent pointer-events-none" />
+        <div className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-8">
+          <div>
+            <div className="flex items-center gap-2 text-primary mb-2 font-bold tracking-widest text-xs uppercase">
+              <LayoutDashboard className="w-4 h-4" /> Management Console
+            </div>
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight text-white">Admin Dashboard</h1>
+            <p className="text-slate-400 text-sm mt-1">Kelola inventaris donasi DeclutterEase</p>
           </div>
-          <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">
-            Admin Dashboard
-          </h1>
-        </div>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <StatCard label="Tersedia" value={availableItems.length} icon={<Package className="w-4 h-4" />} color="text-blue-600" bg="bg-blue-50 dark:bg-blue-900/20" />
-          <StatCard label="Booked" value={shippedItems.length} icon={<TrendingUp className="w-4 h-4" />} color="text-amber-600" bg="bg-amber-50 dark:bg-amber-900/20" />
-          <StatCard label="Review" value={pendingReview.length} icon={<Star className="w-4 h-4" />} color="text-purple-600" bg="bg-purple-50 dark:bg-purple-900/20" />
-          <StatCard label="Selesai" value={completedItems.length} icon={<CheckCircle2 className="w-4 h-4" />} color="text-green-600" bg="bg-green-50 dark:bg-green-900/20" />
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 shrink-0">
+            {[
+              { label: 'Tersedia', val: availableItems.length, color: 'text-sky-400', bg: 'bg-sky-400/10' },
+              { label: 'Booked', val: shippedItems.length, color: 'text-amber-400', bg: 'bg-amber-400/10' },
+              { label: 'Review', val: pendingReview.length, color: 'text-purple-400', bg: 'bg-purple-400/10' },
+              { label: 'Selesai', val: completedItems.length, color: 'text-green-400', bg: 'bg-green-400/10' },
+            ].map((s) => (
+              <div key={s.label} className={`${s.bg} border border-white/5 rounded-2xl px-4 py-3 text-center backdrop-blur-sm`}>
+                <div className={`text-2xl font-black ${s.color}`}>{s.val}</div>
+                <div className="text-[10px] text-slate-400 font-semibold uppercase tracking-widest mt-0.5">{s.label}</div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* ── Left: Form ─────────────────────────────────────────────── */}
-        <div className="lg:col-span-4 space-y-8">
+      {/* ── Main Grid ──────────────────────────────────────────────────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+
+        {/* Left — Form Panel */}
+        <div className="lg:col-span-4 lg:sticky lg:top-6">
           {editingItem ? (
-            /* ── Edit Form ── */
-            <Card className="rounded-3xl border-amber-200/60 dark:border-amber-800/40 shadow-xl shadow-amber-100/50 dark:shadow-amber-900/10 overflow-hidden bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm">
-              <CardHeader className="bg-amber-50 dark:bg-amber-900/10 border-b border-amber-100 dark:border-amber-900/30">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Pencil className="w-5 h-5 text-amber-600" />
-                    <CardTitle className="text-xl font-bold">Edit Barang</CardTitle>
+            <div className="bg-white dark:bg-slate-900 rounded-3xl border border-amber-200 dark:border-amber-800/40 shadow-xl overflow-hidden">
+              <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/10 border-b border-amber-100 dark:border-amber-900/30 px-6 py-5 flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center">
+                    <Pencil className="w-4 h-4 text-amber-600" />
                   </div>
-                  <a href="/dashboard/admin">
-                    <Button variant="ghost" size="icon" className="rounded-full w-8 h-8 text-slate-500 hover:text-slate-900">
-                      <X className="w-4 h-4" />
-                    </Button>
-                  </a>
+                  <div>
+                    <p className="font-bold text-slate-900 dark:text-white leading-tight">Edit Barang</p>
+                    <p className="text-xs text-slate-500">Ubah data barang</p>
+                  </div>
                 </div>
-                <CardDescription>Ubah data barang yang sudah ada.</CardDescription>
-              </CardHeader>
-              <CardContent className="pt-6">
-                <form action={updateDonationItem} className="space-y-5">
+                <a href="/dashboard/admin">
+                  <Button variant="ghost" size="icon" className="rounded-full h-8 w-8 text-slate-400 hover:text-slate-700">
+                    <X className="w-4 h-4" />
+                  </Button>
+                </a>
+              </div>
+              <div className="p-6">
+                <form action={updateDonationItem} className="space-y-4">
                   <input type="hidden" name="itemId" value={editingItem.id} />
                   <input type="hidden" name="existingPhoto" value={editingItem.photos[0] ?? ''} />
-                  <div className="space-y-2">
-                    <Label htmlFor="edit-category" className="text-sm font-semibold">Kategori</Label>
-                    <Input id="edit-category" name="category" defaultValue={editingItem.category} required className="rounded-xl h-11" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="edit-condition" className="text-sm font-semibold">Kondisi</Label>
-                    <Input id="edit-condition" name="condition" defaultValue={editingItem.condition} required className="rounded-xl h-11" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="edit-description" className="text-sm font-semibold">Deskripsi</Label>
-                    <Textarea id="edit-description" name="description" defaultValue={editingItem.description} required className="rounded-xl min-h-[100px]" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="edit-photo" className="text-sm font-semibold">
-                      Ganti Foto <span className="text-slate-400 font-normal">(opsional)</span>
-                    </Label>
+                  <FormField label="Kategori" id="edit-cat">
+                    <Input id="edit-cat" name="category" defaultValue={editingItem.category} required className="rounded-xl h-11" />
+                  </FormField>
+                  <FormField label="Kondisi" id="edit-cond">
+                    <Input id="edit-cond" name="condition" defaultValue={editingItem.condition} required className="rounded-xl h-11" />
+                  </FormField>
+                  <FormField label="Deskripsi" id="edit-desc">
+                    <Textarea id="edit-desc" name="description" defaultValue={editingItem.description} required className="rounded-xl min-h-[90px]" />
+                  </FormField>
+                  <FormField label="Ganti Foto (opsional)" id="edit-photo">
                     {editingItem.photos[0] && (
-                      <img src={editingItem.photos[0]} alt="Current" className="w-full h-36 object-cover rounded-xl mb-2" />
+                      <img src={editingItem.photos[0]} alt="" className="w-full h-32 object-cover rounded-xl mb-2" />
                     )}
-                    <Input id="edit-photo" name="photoFile" type="file" accept="image/*" className="rounded-xl h-11 cursor-pointer pt-2 file:mr-4 file:py-0 file:px-0 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-transparent file:text-amber-600" />
-                  </div>
-                  <Button type="submit" className="w-full rounded-xl h-12 font-bold bg-amber-500 hover:bg-amber-600 text-white shadow-lg shadow-amber-200 dark:shadow-amber-900/20 transition-all hover:-translate-y-0.5">
+                    <Input id="edit-photo" name="photoFile" type="file" accept="image/*" className="rounded-xl h-11 cursor-pointer pt-2.5 text-sm" />
+                  </FormField>
+                  <Button type="submit" className="w-full rounded-xl h-11 font-bold bg-amber-500 hover:bg-amber-600 text-white shadow-lg shadow-amber-200/50 dark:shadow-amber-900/20">
                     Simpan Perubahan
                   </Button>
                 </form>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           ) : (
-            /* ── Create Form ── */
-            <Card className="rounded-3xl border-slate-200/60 dark:border-slate-800/60 shadow-xl shadow-slate-200/50 dark:shadow-black/20 overflow-hidden bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm">
-              <CardHeader className="bg-slate-50 dark:bg-slate-950/50 border-b border-slate-100 dark:border-slate-800">
-                <div className="flex items-center gap-2 mb-1">
-                  <PlusCircle className="w-5 h-5 text-primary" />
-                  <CardTitle className="text-xl font-bold">Input Barang Baru</CardTitle>
+            <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden">
+              <div className="bg-gradient-to-r from-slate-50 to-slate-100/50 dark:from-slate-950/50 dark:to-slate-900 border-b border-slate-100 dark:border-slate-800 px-6 py-5 flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">
+                  <PlusCircle className="w-4 h-4 text-primary" />
                 </div>
-                <CardDescription>Tambah inventaris barang donasi baru.</CardDescription>
-              </CardHeader>
-              <CardContent className="pt-6">
-                <form action={createDonationItem} className="space-y-5">
-                  <div className="space-y-2">
-                    <Label htmlFor="category" className="text-sm font-semibold">Kategori</Label>
-                    <Input id="category" name="category" placeholder="Contoh: Pakaian, Elektronik" required className="rounded-xl border-slate-200 dark:border-slate-800 h-11" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="condition" className="text-sm font-semibold">Kondisi</Label>
-                    <Input id="condition" name="condition" placeholder="Contoh: Bagus, Seperti Baru" required className="rounded-xl border-slate-200 dark:border-slate-800 h-11" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="description" className="text-sm font-semibold">Deskripsi Singkat</Label>
-                    <Textarea id="description" name="description" placeholder="Ceritakan sedikit tentang barang ini..." required className="rounded-xl border-slate-200 dark:border-slate-800 min-h-[100px]" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="photoFile" className="text-sm font-semibold">Foto Barang</Label>
-                    <div className="relative group">
-                      <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-slate-400 group-focus-within:text-primary transition-colors">
-                        <ImageIcon className="w-5 h-5" />
-                      </div>
-                      <Input id="photoFile" name="photoFile" type="file" accept="image/*" className="pl-11 rounded-xl border-slate-200 dark:border-slate-800 h-11 cursor-pointer pt-2 file:mr-4 file:py-0 file:px-0 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-transparent file:text-primary" />
+                <div>
+                  <p className="font-bold text-slate-900 dark:text-white leading-tight">Input Barang Baru</p>
+                  <p className="text-xs text-slate-500">Tambah inventaris donasi</p>
+                </div>
+              </div>
+              <div className="p-6">
+                <form action={createDonationItem} className="space-y-4">
+                  <FormField label="Kategori" id="category">
+                    <Input id="category" name="category" placeholder="Contoh: Pakaian, Elektronik" required className="rounded-xl h-11 border-slate-200 dark:border-slate-800" />
+                  </FormField>
+                  <FormField label="Kondisi" id="condition">
+                    <Input id="condition" name="condition" placeholder="Contoh: Bagus, Seperti Baru" required className="rounded-xl h-11 border-slate-200 dark:border-slate-800" />
+                  </FormField>
+                  <FormField label="Deskripsi" id="description">
+                    <Textarea id="description" name="description" placeholder="Ceritakan sedikit tentang barang ini..." required className="rounded-xl min-h-[90px] border-slate-200 dark:border-slate-800" />
+                  </FormField>
+                  <FormField label="Foto Barang" id="photoFile">
+                    <div className="relative">
+                      <ImageIcon className="absolute left-3 top-3 w-4 h-4 text-slate-400 pointer-events-none" />
+                      <Input id="photoFile" name="photoFile" type="file" accept="image/*" className="pl-9 rounded-xl h-11 cursor-pointer pt-2.5 text-sm border-slate-200 dark:border-slate-800" />
                     </div>
-                  </div>
-                  <Button type="submit" className="w-full rounded-xl h-12 font-bold shadow-lg shadow-primary/20 transition-all hover:-translate-y-0.5 active:translate-y-0">
+                  </FormField>
+                  <Button type="submit" className="w-full rounded-xl h-11 font-bold shadow-lg shadow-primary/20">
                     Publikasikan Barang
                   </Button>
                 </form>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           )}
         </div>
 
-        {/* ── Right: Management Lists ──────────────────────────────── */}
+        {/* Right — Lists */}
         <div className="lg:col-span-8 space-y-10">
-          {/* Pending Review - Priority */}
-          {pendingReview.length > 0 && (
-            <section className="space-y-6">
-              <div className="flex items-center gap-2">
-                <div className="relative">
-                  <Star className="w-6 h-6 text-purple-500 fill-purple-500/20" />
-                  <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-white dark:border-slate-950 animate-bounce" />
-                </div>
-                <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Menunggu Review</h2>
-              </div>
 
-              <div className="grid grid-cols-1 gap-6">
+          {/* ── Pending Review ─────────────────────────────────────────── */}
+          {pendingReview.length > 0 && (
+            <section className="space-y-5">
+              <SectionHeader
+                icon={<Star className="w-4 h-4 text-purple-500 fill-purple-500/30" />}
+                iconBg="bg-purple-50 dark:bg-purple-900/20"
+                title="Menunggu Review"
+                badge={`${pendingReview.length} item`}
+                badgeColor="bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400"
+                pulse
+              />
+              <div className="space-y-5">
                 {pendingReview.map((item) => (
-                  <Card key={item.id} className="rounded-3xl border-purple-200/50 dark:border-purple-900/30 overflow-hidden shadow-lg shadow-purple-500/5 bg-white dark:bg-slate-900">
+                  <div key={item.id} className="bg-white dark:bg-slate-900 rounded-3xl border border-purple-200/50 dark:border-purple-900/30 overflow-hidden shadow-lg shadow-purple-500/5">
                     <div className="flex flex-col md:flex-row">
-                      <div className="md:w-64 h-64 bg-slate-100 dark:bg-slate-800 shrink-0 relative">
+                      <div className="md:w-56 h-56 bg-slate-100 dark:bg-slate-800 shrink-0 relative">
                         {item.receiptPhoto ? (
                           <img src={item.receiptPhoto} alt="Tanda Terima" className="w-full h-full object-cover" />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center text-slate-400 uppercase text-[10px] font-bold tracking-widest p-4 text-center">Foto Belum Ada</div>
+                          <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-slate-300">
+                            <ImageIcon className="w-10 h-10" />
+                            <span className="text-xs font-medium">Belum ada foto</span>
+                          </div>
                         )}
-                        <div className="absolute bottom-2 left-2 bg-black/60 backdrop-blur-md text-white text-[10px] px-2 py-1 rounded-md flex items-center gap-1">
-                          <ImageIcon className="w-3 h-3" /> Foto dari Penerima
+                        <div className="absolute top-2 left-2">
+                          <span className="bg-purple-600 text-white text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full">Penerima Upload</span>
                         </div>
                       </div>
-                      <div className="flex-1 p-6 space-y-4">
-                        <div>
-                          <h3 className="text-xl font-bold">{item.category}</h3>
-                          <div className="flex items-center gap-2 text-slate-500 mt-1">
-                            <Users className="w-4 h-4" />
-                            <span className="text-sm">Penerima: <span className="font-semibold text-slate-900 dark:text-white">{item.penerima?.name}</span></span>
+                      <div className="flex-1 p-5 flex flex-col justify-between gap-4">
+                        <div className="space-y-2">
+                          <h3 className="text-lg font-bold text-slate-900 dark:text-white">{item.category}</h3>
+                          <div className="flex items-center gap-2 text-sm text-slate-500">
+                            <Users className="w-3.5 h-3.5 shrink-0" />
+                            <span>Penerima: <span className="font-semibold text-slate-800 dark:text-slate-200">{item.penerima?.name}</span></span>
                           </div>
-                          <div className="flex items-center gap-2 text-slate-500 mt-1">
-                            <MapPin className="w-4 h-4 text-red-500" />
-                            <span className="text-sm italic">{item.receiptLocation}</span>
-                          </div>
+                          {item.receiptLocation && (
+                            <div className="flex items-start gap-2 text-sm text-slate-500">
+                              <MapPin className="w-3.5 h-3.5 shrink-0 mt-0.5 text-red-400" />
+                              <span className="italic leading-snug">{item.receiptLocation}</span>
+                            </div>
+                          )}
                         </div>
-                        <div className="bg-slate-50 dark:bg-slate-950/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
+                        <div className="bg-slate-50 dark:bg-slate-950/60 rounded-2xl p-4 border border-slate-100 dark:border-slate-800">
                           <form action={addReview} className="space-y-3">
                             <input type="hidden" name="itemId" value={item.id} />
-                            <Label htmlFor={`review-${item.id}`} className="text-xs font-bold uppercase text-slate-500 tracking-wider">Catatan Penyelesaian</Label>
+                            <Label htmlFor={`review-${item.id}`} className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                              Catatan Penyelesaian
+                            </Label>
                             <Textarea
                               id={`review-${item.id}`}
                               name="review"
-                              placeholder="Barang sudah terkonfirmasi sampai di lokasi dengan baik..."
+                              placeholder="Barang sudah terkonfirmasi diterima dengan baik..."
                               required
-                              className="rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900"
+                              className="rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-sm min-h-[80px]"
                             />
-                            <Button type="submit" size="sm" className="w-full rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold gap-2">
-                              Selesaikan Donasi <CheckCircle2 className="w-4 h-4" />
+                            <Button type="submit" className="w-full rounded-xl h-11 font-bold gap-2 shadow-lg shadow-primary/20">
+                              <CheckCircle2 className="w-4 h-4" /> Selesaikan Donasi
                             </Button>
                           </form>
                         </div>
                       </div>
                     </div>
-                  </Card>
+                  </div>
                 ))}
               </div>
             </section>
           )}
 
-          {/* All Inventory */}
-          <section className="space-y-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Package className="w-6 h-6 text-primary" />
-                <h2 className="text-2xl font-bold">Semua Inventaris</h2>
-              </div>
-              <div className="text-sm font-medium text-slate-500 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full">
-                Total: {donations.length} items
-              </div>
-            </div>
+          {/* ── All Inventory ───────────────────────────────────────────── */}
+          <section className="space-y-5">
+            <SectionHeader
+              icon={<Package className="w-4 h-4 text-primary" />}
+              iconBg="bg-primary/10"
+              title="Semua Inventaris"
+              badge={`${donations.length} items`}
+              badgeColor="bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
+            />
 
-            <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 overflow-hidden">
-              <div className="divide-y divide-slate-100 dark:divide-slate-800">
-                {donations.length === 0 ? (
-                  <div className="p-12 text-center text-slate-500 italic">Belum ada data donasi.</div>
-                ) : (
-                  donations.map((item) => (
+            {donations.length === 0 ? (
+              <div className="bg-white dark:bg-slate-900 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-3xl p-16 text-center">
+                <Inbox className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+                <p className="text-slate-500 font-medium">Belum ada data donasi.</p>
+                <p className="text-slate-400 text-sm mt-1">Tambah barang pertama di panel kiri.</p>
+              </div>
+            ) : (
+              <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
+                <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                  {donations.map((item) => (
                     <div
                       key={item.id}
-                      className={`p-5 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-950/30 transition-colors ${editingId === item.id ? 'bg-amber-50 dark:bg-amber-900/10 border-l-4 border-amber-400' : ''}`}
+                      className={`px-5 py-4 flex items-center gap-4 hover:bg-slate-50 dark:hover:bg-slate-950/40 transition-colors ${editingId === item.id ? 'bg-amber-50 dark:bg-amber-900/10 border-l-4 border-amber-400' : ''}`}
                     >
-                      <div className="flex items-center gap-4">
-                        <div className="w-14 h-14 rounded-2xl bg-slate-100 dark:bg-slate-800 overflow-hidden shrink-0 border border-slate-200 dark:border-slate-800">
-                          {item.photos[0] ? (
-                            <img src={item.photos[0]} alt="" className="w-full h-full object-cover" />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center text-slate-300">
-                              <Package className="w-6 h-6" />
-                            </div>
-                          )}
-                        </div>
-                        <div>
-                          <h4 className="font-bold text-slate-900 dark:text-white">{item.category}</h4>
-                          <p className="text-sm text-slate-500 line-clamp-1 max-w-xs">{item.description}</p>
-                          <div className="flex items-center gap-3 mt-1">
-                            <StatusBadge status={item.status} />
-                            <span className="text-[10px] uppercase font-extrabold text-slate-400 tracking-tighter">Kondisi: {item.condition}</span>
+                      {/* Thumbnail */}
+                      <div className="w-14 h-14 rounded-2xl bg-slate-100 dark:bg-slate-800 overflow-hidden shrink-0 border border-slate-200 dark:border-slate-700">
+                        {item.photos[0] ? (
+                          <img src={item.photos[0]} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-slate-300">
+                            <Package className="w-6 h-6" />
                           </div>
-                        </div>
+                        )}
                       </div>
 
-                      <div className="flex items-center gap-2">
+                      {/* Info */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <h4 className="font-bold text-slate-900 dark:text-white truncate">{item.category}</h4>
+                          <StatusBadge status={item.status} />
+                        </div>
+                        <p className="text-sm text-slate-500 truncate">{item.description}</p>
                         {item.penerima && (
-                          <div className="hidden sm:block text-right mr-2">
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-0.5">Penerima</p>
-                            <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">{item.penerima.name}</p>
+                          <div className="flex items-center gap-1.5 mt-1 text-xs text-slate-400">
+                            <Users className="w-3 h-3" />
+                            <span>{item.penerima.name}</span>
                             {item.bookedAt && (
-                              <p className="text-[10px] text-slate-400 flex items-center gap-1 justify-end mt-0.5">
-                                <Clock className="w-2.5 h-2.5" />
-                                {new Date(item.bookedAt).toLocaleString('id-ID', { dateStyle: 'short', timeStyle: 'short' })}
-                              </p>
+                              <>
+                                <span>·</span>
+                                <Clock className="w-3 h-3" />
+                                <span>{new Date(item.bookedAt).toLocaleString('id-ID', { dateStyle: 'short', timeStyle: 'short' })}</span>
+                              </>
                             )}
                           </div>
                         )}
-                        {/* Edit button — only for AVAILABLE items */}
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex items-center gap-1 shrink-0">
                         {item.status === 'AVAILABLE' && (
                           <a href={`/dashboard/admin?edit=${item.id}`}>
-                            <Button variant="ghost" size="icon" className="rounded-full w-9 h-9 text-slate-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors">
+                            <Button variant="ghost" size="icon" className="rounded-full w-9 h-9 text-slate-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20">
                               <Pencil className="w-4 h-4" />
                             </Button>
                           </a>
                         )}
-                        {/* Delete — Client Component so confirm() works */}
                         <DeleteItemButton itemId={item.id} action={deleteDonationItem} />
                       </div>
                     </div>
-                  ))
-                )}
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
           </section>
+
+          {/* ── Completed ───────────────────────────────────────────────── */}
+          {completedItems.length > 0 && (
+            <section className="space-y-5">
+              <SectionHeader
+                icon={<CheckCircle2 className="w-4 h-4 text-green-500" />}
+                iconBg="bg-green-50 dark:bg-green-900/20"
+                title="Selesai"
+                badge={`${completedItems.length} items`}
+                badgeColor="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+              />
+              <div className="space-y-3">
+                {completedItems.map((item) => (
+                  <div key={item.id} className="bg-white dark:bg-slate-900 rounded-2xl border border-green-100 dark:border-green-900/30 px-5 py-4 flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 overflow-hidden shrink-0">
+                      {item.photos[0] ? (
+                        <img src={item.photos[0]} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center"><Package className="w-4 h-4 text-slate-300" /></div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-slate-800 dark:text-slate-200 text-sm">{item.category}</p>
+                      {item.review && <p className="text-xs text-slate-500 italic truncate mt-0.5">"{item.review}"</p>}
+                    </div>
+                    <div className="flex items-center gap-1.5 text-xs text-slate-400 shrink-0">
+                      <Users className="w-3 h-3" />{item.penerima?.name}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
         </div>
       </div>
     </div>
   )
 }
 
-function StatCard({
-  label,
-  value,
-  icon,
-  color,
-  bg,
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function FormField({ label, id, children }: { label: string; id: string; children: React.ReactNode }) {
+  return (
+    <div className="space-y-1.5">
+      <Label htmlFor={id} className="text-sm font-semibold text-slate-700 dark:text-slate-300">{label}</Label>
+      {children}
+    </div>
+  )
+}
+
+function SectionHeader({
+  icon, iconBg, title, badge, badgeColor, pulse,
 }: {
-  label: string
-  value: number
-  icon: React.ReactNode
-  color: string
-  bg: string
+  icon: React.ReactNode; iconBg: string; title: string
+  badge: string; badgeColor: string; pulse?: boolean
 }) {
   return (
-    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl shadow-sm">
-      <div className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-lg mb-2 ${bg} ${color}`}>
-        {icon}
-        <span className="text-[10px] font-black uppercase tracking-widest">{label}</span>
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-2.5">
+        <div className={`relative w-8 h-8 rounded-xl flex items-center justify-center ${iconBg}`}>
+          {icon}
+          {pulse && <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white dark:border-slate-950 animate-pulse" />}
+        </div>
+        <h2 className="text-xl font-bold text-slate-900 dark:text-white">{title}</h2>
       </div>
-      <div className="text-2xl font-black text-slate-900 dark:text-white">{value}</div>
+      <span className={`text-[11px] font-bold px-3 py-1 rounded-full ${badgeColor}`}>{badge}</span>
     </div>
   )
 }
 
 function StatusBadge({ status }: { status: string }) {
-  const styles: Record<string, string> = {
-    AVAILABLE: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
-    SHIPPED: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-    RECEIVED: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
-    COMPLETED: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400',
+  const map: Record<string, { label: string; cls: string }> = {
+    AVAILABLE: { label: 'Tersedia', cls: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' },
+    SHIPPED:   { label: 'Dikirim',  cls: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' },
+    RECEIVED:  { label: 'Diterima', cls: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' },
+    COMPLETED: { label: 'Selesai',  cls: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400' },
   }
-  const labels: Record<string, string> = {
-    AVAILABLE: 'Tersedia',
-    SHIPPED: 'Dikirim',
-    RECEIVED: 'Diterima',
-    COMPLETED: 'Selesai',
-  }
+  const s = map[status] ?? { label: status, cls: 'bg-slate-100 text-slate-600' }
   return (
-    <span className={`text-[10px] font-black uppercase tracking-tighter px-2 py-0.5 rounded-md ${styles[status] ?? 'bg-slate-100 text-slate-600'}`}>
-      {labels[status] ?? status}
+    <span className={`text-[9px] font-black uppercase tracking-wide px-2 py-0.5 rounded-md whitespace-nowrap ${s.cls}`}>
+      {s.label}
     </span>
   )
 }

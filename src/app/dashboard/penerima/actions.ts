@@ -7,6 +7,7 @@ import { revalidatePath } from 'next/cache'
 
 export async function bookItem(formData: FormData) {
   const itemId = formData.get('itemId') as string
+  const scheduledAt = formData.get('scheduledAt') as string
   const cs = await cookies()
   const sb = await createClient(cs)
   const { data: { user } } = await sb.auth.getUser()
@@ -17,7 +18,7 @@ export async function bookItem(formData: FormData) {
     data: {
       status: 'SHIPPED',
       penerimaId: user.id,
-      bookedAt: new Date(),
+      bookedAt: scheduledAt ? new Date(scheduledAt) : new Date(),
     },
   })
   revalidatePath('/dashboard/penerima')
