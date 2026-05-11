@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import { Heart, Loader2, Mail, Lock, User } from 'lucide-react'
+import { Package, Loader2, Mail, Lock, User } from 'lucide-react'
 import Link from 'next/link'
 
 export default function LoginPage() {
@@ -44,7 +44,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md relative z-10">
         <Link href="/" className="flex items-center justify-center gap-2 mb-8 group w-fit mx-auto">
           <div className="bg-white dark:bg-slate-900 p-2.5 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 group-hover:scale-105 transition-transform">
-            <Heart className="w-6 h-6 text-primary fill-primary/20" />
+            <Package className="w-6 h-6 text-primary fill-primary/20" />
           </div>
           <span className="font-bold text-2xl tracking-tight text-slate-900 dark:text-white">
             Declutter<span className="text-primary">Ease</span>

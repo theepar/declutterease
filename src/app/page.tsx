@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { ArrowRight, Heart, Package, Recycle, ShieldCheck, Zap } from 'lucide-react'
+import { ArrowRight, Package, Recycle, ShieldCheck, Zap } from 'lucide-react'
 
 export default function Home() {
   return (
@@ -8,7 +8,7 @@ export default function Home() {
       <header className="px-6 lg:px-12 h-20 flex items-center border-b border-slate-200/50 dark:border-slate-800/50 bg-white/50 dark:bg-slate-950/50 backdrop-blur-xl sticky top-0 z-50">
         <Link className="flex items-center gap-2 group" href="/">
           <div className="bg-primary/10 p-2 rounded-xl group-hover:bg-primary/20 transition-colors">
-            <Heart className="w-5 h-5 text-primary" />
+            <Package className="w-5 h-5 text-primary" />
           </div>
           <span className="font-bold text-xl tracking-tight text-slate-900 dark:text-white">
             Declutter<span className="text-primary">Ease</span>
@@ -139,7 +139,7 @@ export default function Home() {
       <footer className="w-full py-8 bg-white dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800">
         <div className="container px-4 md:px-6 mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2 opacity-80">
-            <Heart className="w-4 h-4 text-primary" />
+            <Package className="w-4 h-4 text-primary" />
             <span className="font-semibold text-slate-900 dark:text-white">DeclutterEase</span>
           </div>
           <p className="text-sm text-slate-500 dark:text-slate-400">

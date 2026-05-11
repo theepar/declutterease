@@ -24,6 +24,7 @@ model DonationItem {
   photos          String[]
   status          String   @default("AVAILABLE")
   penerimaId      String?
+  bookedAt        DateTime?
   createdAt       DateTime @default(now())
   receiptLocation String?
   receiptPhoto    String?
