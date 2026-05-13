@@ -2,10 +2,10 @@
 
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import Image from 'next/image'
+
 import { 
-  X, MapPin, MessageSquare, Image as ImageIcon, 
-  Calendar, User, CheckCircle2, Package 
+  X, MapPin, MessageSquare, 
+  Calendar, User, CheckCircle2 
 } from 'lucide-react'
 
 interface CompletedItemDetailProps {
@@ -13,8 +13,6 @@ interface CompletedItemDetailProps {
     id: string
     category: string
     description: string
-    photos: string[]
-    receiptPhoto: string | null
     receiptLocation: string | null
     review: string | null
     penerima: { name: string | null } | null
@@ -103,43 +101,7 @@ export function CompletedItemDetail({ item }: CompletedItemDetailProps) {
                 </p>
               </div>
 
-              {/* Photos Comparison */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-                <div className="space-y-2">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
-                    <Package className="w-3 h-3" /> Foto Awal
-                  </p>
-                  <div className="aspect-video rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-100 dark:border-slate-800 relative">
-                    {item.photos[0] ? (
-                      <Image 
-                        src={item.photos[0]} 
-                        alt="Awal" 
-                        fill
-                        className="object-cover" 
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-slate-300"><ImageIcon className="w-8 h-8" /></div>
-                    )}
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5 text-green-600">
-                    <ImageIcon className="w-3 h-3" /> Bukti Foto Terima
-                  </p>
-                  <div className="aspect-video rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-800 border-2 border-green-100 dark:border-green-900/30 relative">
-                    {item.receiptPhoto ? (
-                      <Image 
-                        src={item.receiptPhoto} 
-                        alt="Terima" 
-                        fill
-                        className="object-cover" 
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-slate-300"><ImageIcon className="w-8 h-8" /></div>
-                    )}
-                  </div>
-                </div>
-              </div>
+
             </div>
 
             {/* Footer */}

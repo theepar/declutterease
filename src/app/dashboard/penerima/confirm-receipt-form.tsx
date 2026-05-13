@@ -3,7 +3,7 @@
 import { useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Camera, LocateFixed, Loader2, MapPin, CheckCircle2 } from 'lucide-react'
+import { LocateFixed, Loader2, MapPin, CheckCircle2 } from 'lucide-react'
 import { confirmReceipt } from './actions'
 
 export function ConfirmReceiptForm({ itemId }: { itemId: string }) {
@@ -100,17 +100,6 @@ export function ConfirmReceiptForm({ itemId }: { itemId: string }) {
         )}
       </div>
 
-      {/* Photo upload */}
-      <div className="relative">
-        <Camera className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-        <Input
-          name="photoFile"
-          type="file"
-          accept="image/*"
-          required
-          className="pl-9 rounded-xl border-slate-200 dark:border-slate-800 h-11 cursor-pointer pt-2.5 text-sm"
-        />
-      </div>
 
       <div className="space-y-1.5">
         <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest pl-1">

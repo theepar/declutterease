@@ -27,22 +27,13 @@ export async function bookItem(formData: FormData) {
 export async function confirmReceipt(formData: FormData) {
   const itemId = formData.get('itemId') as string
   const location = formData.get('location') as string
-  const photoFile = formData.get('photoFile') as File | null
   const review = formData.get('review') as string
-
-  let photoUrl = ''
-  if (photoFile && photoFile.size > 0) {
-    const bytes = await photoFile.arrayBuffer()
-    const b64 = Buffer.from(bytes).toString('base64')
-    photoUrl = `data:${photoFile.type};base64,${b64}`
-  }
 
   await prisma.donationItem.update({
     where: { id: itemId },
     data: { 
       status: 'COMPLETED', 
       receiptLocation: location, 
-      receiptPhoto: photoUrl,
       review: review
     },
   })
@@ -66,8 +57,7 @@ export async function cancelBooking(formData: FormData) {
       status: 'AVAILABLE',
       penerimaId: null,
       bookedAt: null,
-      receiptLocation: null,
-      receiptPhoto: null
+      receiptLocation: null
     },
   })
   revalidatePath('/dashboard/penerima')

@@ -21,13 +21,11 @@ model DonationItem {
   category        String
   condition       String
   description     String
-  photos          String[]
   status          String   @default("AVAILABLE")
   penerimaId      String?
   bookedAt        DateTime?
   createdAt       DateTime @default(now())
   receiptLocation String?
-  receiptPhoto    String?
   review          String?
   penerima        User?    @relation("ReceivedDonations", fields: [penerimaId], references: [id])
 }

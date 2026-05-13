@@ -6,10 +6,9 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import Image from 'next/image'
 import { DeleteItemButton } from './delete-button'
 import {
-  PlusCircle, Package, Users, Image as ImageIcon,
+  PlusCircle, Package, Users,
   CheckCircle2, LayoutDashboard, Pencil, Clock, X, Inbox,
   Search, ArrowRight
 } from 'lucide-react'
@@ -117,7 +116,6 @@ export default async function AdminDashboard({
               <div className="p-6">
                 <form action={updateDonationItem} className="space-y-4">
                   <input type="hidden" name="itemId" value={editingItem.id} />
-                  <input type="hidden" name="existingPhoto" value={editingItem.photos[0] ?? ''} />
                   <FormField label="Kategori" id="edit-cat">
                     <Input id="edit-cat" name="category" defaultValue={editingItem.category} required className="rounded-xl h-11" />
                   </FormField>
@@ -126,19 +124,6 @@ export default async function AdminDashboard({
                   </FormField>
                   <FormField label="Deskripsi" id="edit-desc">
                     <Textarea id="edit-desc" name="description" defaultValue={editingItem.description} required className="rounded-xl min-h-[90px]" />
-                  </FormField>
-                  <FormField label="Ganti Foto (opsional)" id="edit-photo">
-                    {editingItem.photos[0] && (
-                      <div className="relative w-full h-32 mb-2">
-                        <Image 
-                          src={editingItem.photos[0]} 
-                          alt="" 
-                          fill
-                          className="object-cover rounded-xl" 
-                        />
-                      </div>
-                    )}
-                    <Input id="edit-photo" name="photoFile" type="file" accept="image/*" className="rounded-xl h-11 cursor-pointer pt-2.5 text-sm" />
                   </FormField>
                   <Button type="submit" className="w-full rounded-xl h-11 font-bold bg-amber-500 hover:bg-amber-600 text-white shadow-lg shadow-amber-200/50 dark:shadow-amber-900/20">
                     Simpan Perubahan
@@ -167,12 +152,6 @@ export default async function AdminDashboard({
                   </FormField>
                   <FormField label="Deskripsi" id="description">
                     <Textarea id="description" name="description" placeholder="Ceritakan sedikit tentang barang ini..." required className="rounded-xl min-h-[90px] border-slate-200 dark:border-slate-800" />
-                  </FormField>
-                  <FormField label="Foto Barang" id="photoFile">
-                    <div className="relative">
-                      <ImageIcon className="absolute left-3 top-3 w-4 h-4 text-slate-400 pointer-events-none" />
-                      <Input id="photoFile" name="photoFile" type="file" accept="image/*" className="pl-9 rounded-xl h-11 cursor-pointer pt-2.5 text-sm border-slate-200 dark:border-slate-800" />
-                    </div>
                   </FormField>
                   <Button type="submit" className="w-full rounded-xl h-11 font-bold shadow-lg shadow-primary/20">
                     Publikasikan Barang
@@ -236,20 +215,8 @@ export default async function AdminDashboard({
                       key={item.id}
                       className={`px-5 py-4 flex items-center gap-4 hover:bg-slate-50 dark:hover:bg-slate-950/40 transition-colors ${editingId === item.id ? 'bg-amber-50 dark:bg-amber-900/10 border-l-4 border-amber-400' : ''}`}
                     >
-                      {/* Thumbnail */}
-                      <div className="w-14 h-14 rounded-2xl bg-slate-100 dark:bg-slate-800 overflow-hidden shrink-0 border border-slate-200 dark:border-slate-700 relative">
-                        {item.photos[0] ? (
-                          <Image 
-                            src={item.photos[0]} 
-                            alt="" 
-                            fill
-                            className="object-cover" 
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-slate-300">
-                            <Package className="w-6 h-6" />
-                          </div>
-                        )}
+                      <div className="w-14 h-14 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-300 border border-slate-200 dark:border-slate-700 shrink-0">
+                        <Package className="w-6 h-6" />
                       </div>
 
                       {/* Info */}
@@ -305,17 +272,8 @@ export default async function AdminDashboard({
               <div className="space-y-3">
                 {completedItems.map((item) => (
                   <div key={item.id} className="bg-white dark:bg-slate-900 rounded-2xl border border-green-100 dark:border-green-900/30 px-5 py-4 flex items-center gap-4 group">
-                    <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 overflow-hidden shrink-0 relative">
-                      {item.photos[0] ? (
-                        <Image 
-                          src={item.photos[0]} 
-                          alt="" 
-                          fill
-                          className="object-cover" 
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center"><Package className="w-4 h-4 text-slate-300" /></div>
-                      )}
+                    <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center shrink-0">
+                      <Package className="w-4 h-4 text-slate-300" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-slate-800 dark:text-slate-200 text-sm">{item.category}</p>

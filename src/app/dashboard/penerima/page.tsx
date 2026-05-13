@@ -5,7 +5,6 @@ import { prisma } from '@/lib/prisma'
 import { ConfirmReceiptForm } from './confirm-receipt-form'
 import { CancelBookingButton } from './cancel-booking-button'
 import { BookItemModal } from './book-item-modal'
-import Image from 'next/image'
 import {
   Package,
   Clock,
@@ -124,19 +123,8 @@ export default async function PenerimaDashboard({
             {myBookings.map((item) => (
               <div key={item.id} className="group bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/60 rounded-[32px] overflow-hidden shadow-xl shadow-slate-200/40 dark:shadow-black/20 hover:border-primary/30 transition-all duration-300">
                 <div className="flex flex-col lg:flex-row">
-                  <div className="w-full lg:w-72 h-56 lg:h-auto bg-slate-100 dark:bg-slate-800 shrink-0 relative overflow-hidden">
-                    {item.photos[0] ? (
-                      <Image 
-                        src={item.photos[0]} 
-                        alt={item.category} 
-                        fill
-                        className="object-cover transition-transform duration-700 group-hover:scale-110" 
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-slate-300 bg-slate-50 dark:bg-slate-950">
-                        <Package className="w-12 h-12 opacity-30" />
-                      </div>
-                    )}
+                  <div className="w-full lg:w-72 h-56 lg:h-auto bg-slate-100 dark:bg-slate-800 shrink-0 flex items-center justify-center text-slate-300">
+                    <Package className="w-12 h-12 opacity-30" />
                     <div className="absolute top-4 left-4">
                       <StatusBadge status={item.status} />
                     </div>
@@ -261,21 +249,8 @@ export default async function PenerimaDashboard({
                 key={item.id}
                 className="group bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/60 rounded-[32px] overflow-hidden shadow-sm hover:shadow-2xl hover:shadow-slate-200/60 dark:hover:shadow-black/60 hover:-translate-y-2 transition-all duration-500"
               >
-                <div className="relative h-64 w-full overflow-hidden bg-slate-100 dark:bg-slate-800">
-                  {item.photos[0] ? (
-                    <Image
-                      src={item.photos[0]}
-                      alt={item.category}
-                      fill
-                      className="object-cover group-hover:scale-110 transition-transform duration-700"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex flex-col items-center justify-center text-slate-300 bg-slate-50 dark:bg-slate-950">
-                      <Package className="w-14 h-14 opacity-20" />
-                    </div>
-                  )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                  
+                <div className="relative h-64 w-full flex flex-col items-center justify-center text-slate-300 bg-slate-50 dark:bg-slate-950">
+                  <Package className="w-14 h-14 opacity-20" />
                   <div className="absolute top-4 left-4">
                     <span className="inline-flex items-center gap-1.5 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md px-4 py-2 rounded-2xl text-xs font-black text-primary shadow-xl border border-slate-100 dark:border-slate-800">
                       <Tag className="w-3.5 h-3.5" /> {item.category}
@@ -317,17 +292,8 @@ export default async function PenerimaDashboard({
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 opacity-70 hover:opacity-100 transition-opacity grayscale-[0.5] hover:grayscale-0">
             {takenDonations.map((item) => (
               <div key={item.id} className="bg-white dark:bg-slate-900 border border-slate-200/50 dark:border-slate-800/50 rounded-2xl p-3 space-y-3 shadow-sm flex flex-col">
-                <div className="aspect-square rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-800 relative">
-                  {item.photos[0] ? (
-                    <Image 
-                      src={item.photos[0]} 
-                      alt={item.category} 
-                      fill
-                      className="object-cover opacity-60" 
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-slate-300"><Package className="w-6 h-6" /></div>
-                  )}
+                <div className="aspect-square rounded-xl flex items-center justify-center text-slate-300 bg-slate-100 dark:bg-slate-800 relative">
+                  <Package className="w-6 h-6 opacity-30" />
                   <div className="absolute inset-0 flex items-center justify-center">
                     <span className="bg-slate-900/80 text-white text-[8px] font-black uppercase tracking-widest px-2 py-1 rounded-full backdrop-blur-sm">
                        {item.status === 'COMPLETED' ? 'Selesai' : 'Terpesan'}

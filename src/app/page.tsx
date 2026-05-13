@@ -83,7 +83,7 @@ export default function Home() {
                 </div>
                 <h3 className="text-xl font-bold mb-3 text-slate-900 dark:text-white">List Your Items</h3>
                 <p className="text-slate-500 dark:text-slate-400 leading-relaxed">
-                  Snap a quick photo, add a brief description, and your item is instantly available for those who need it most.
+                  Add a brief description, and your item is instantly available for those who need it most.
                 </p>
               </div>
 
