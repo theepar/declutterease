@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/utils/supabase/server'
 import { cookies } from 'next/headers'
-import { prisma } from '@/lib/prisma'
+
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -30,20 +30,29 @@ export default async function AdminDashboard({
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const dbUser = await prisma.user.findUnique({ where: { id: user.id } })
+  const { data: dbUser } = await supabase
+    .from('User')
+    .select('*')
+    .eq('id', user.id)
+    .single()
+
   if (dbUser?.role !== 'ADMIN') redirect('/dashboard/penerima')
 
-  const donations = await prisma.donationItem.findMany({
-    where: {
-      OR: [
-        { category: { contains: search, mode: 'insensitive' } },
-        { description: { contains: search, mode: 'insensitive' } },
-      ],
-      ...(statusFilter ? { status: statusFilter } : {}),
-    },
-    orderBy: { createdAt: 'desc' },
-    include: { penerima: true },
-  })
+  let query = supabase
+    .from('DonationItem')
+    .select('*, penerima:User(*)')
+    .order('createdAt', { ascending: false })
+
+  if (search) {
+    query = query.or(`category.ilike.%${search}%,description.ilike.%${search}%`)
+  }
+  if (statusFilter) {
+    query = query.eq('status', statusFilter)
+  }
+
+  const { data: donationsData } = await query
+  const donations = donationsData || []
+
 
   const editingItem = editingId ? donations.find((d) => d.id === editingId) ?? null : null
   const availableItems  = donations.filter((i) => i.status === 'AVAILABLE')

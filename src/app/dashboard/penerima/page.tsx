@@ -1,7 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/utils/supabase/server'
 import { cookies } from 'next/headers'
-import { prisma } from '@/lib/prisma'
 import { ConfirmReceiptForm } from './confirm-receipt-form'
 import { CancelBookingButton } from './cancel-booking-button'
 import { BookItemModal } from './book-item-modal'
@@ -30,45 +29,56 @@ export default async function PenerimaDashboard({
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const dbUser = await prisma.user.findUnique({ where: { id: user.id } })
+  const { data: dbUser } = await supabase
+    .from('User')
+    .select('*')
+    .eq('id', user.id)
+    .single()
+    
   if (!dbUser) redirect('/login')
 
   // Categories for filter
-  const categories = await prisma.donationItem.findMany({
-    where: { status: 'AVAILABLE' },
-    select: { category: true },
-    distinct: ['category'],
-  })
+  const { data: categoriesData } = await supabase
+    .from('DonationItem')
+    .select('category')
+    .eq('status', 'AVAILABLE')
+  
+  const categories = Array.from(new Set(categoriesData?.map(c => c.category) || []))
+    .map(category => ({ category }))
 
-  const availableDonations = await prisma.donationItem.findMany({
-    where: { 
-      status: 'AVAILABLE',
-      OR: [
-        { category: { contains: search, mode: 'insensitive' } },
-        { description: { contains: search, mode: 'insensitive' } },
-      ],
-      ...(categoryFilter ? { category: categoryFilter } : {}),
-    },
-    orderBy: { createdAt: 'desc' },
-  })
+  let availableQuery = supabase
+    .from('DonationItem')
+    .select('*')
+    .eq('status', 'AVAILABLE')
 
-  const myBookings = await prisma.donationItem.findMany({
-    where: {
-      penerimaId: user.id,
-      status: { in: ['SHIPPED', 'RECEIVED', 'COMPLETED'] },
-    },
-    orderBy: { createdAt: 'desc' },
-  })
+  if (search) {
+    availableQuery = availableQuery.or(`category.ilike.%${search}%,description.ilike.%${search}%`)
+  }
+  
+  if (categoryFilter) {
+    availableQuery = availableQuery.eq('category', categoryFilter)
+  }
 
-  const takenDonations = await prisma.donationItem.findMany({
-    where: {
-      status: { in: ['SHIPPED', 'RECEIVED', 'COMPLETED'] },
-      NOT: { penerimaId: user.id }
-    },
-    orderBy: { createdAt: 'desc' },
-    take: 6,
-    include: { penerima: { select: { name: true } } }
-  })
+  const { data: availableData } = await availableQuery
+    .order('createdAt', { ascending: false })
+  const availableDonations = availableData || []
+
+  const { data: myBookingsData } = await supabase
+    .from('DonationItem')
+    .select('*')
+    .eq('penerimaId', user.id)
+    .in('status', ['SHIPPED', 'RECEIVED', 'COMPLETED'])
+    .order('createdAt', { ascending: false })
+  const myBookings = myBookingsData || []
+
+  const { data: takenDonationsData } = await supabase
+    .from('DonationItem')
+    .select('*, penerima:User(name)')
+    .in('status', ['SHIPPED', 'RECEIVED', 'COMPLETED'])
+    .neq('penerimaId', user.id)
+    .order('createdAt', { ascending: false })
+    .limit(6)
+  const takenDonations = takenDonationsData || []
 
   const initials = dbUser.name
     .split(' ')

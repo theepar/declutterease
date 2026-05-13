@@ -1,7 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/utils/supabase/server'
 import { cookies } from 'next/headers'
-import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import {
@@ -23,7 +22,12 @@ export default async function DashboardLayout({
   const { data: { user }, error } = await supabase.auth.getUser()
   if (error || !user) redirect('/login')
 
-  const dbUser = await prisma.user.findUnique({ where: { id: user.id } })
+  const { data: dbUser } = await supabase
+    .from('User')
+    .select('*')
+    .eq('id', user.id)
+    .single()
+
   if (!dbUser) {
     await supabase.auth.signOut()
     redirect('/login')
@@ -33,16 +37,14 @@ export default async function DashboardLayout({
   const initials = dbUser.name
     .split(' ')
     .slice(0, 2)
-    .map((w) => w[0])
+    .map((w: string) => w[0])
     .join('')
     .toUpperCase()
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 selection:bg-primary/20">
-      {/* ── Top Nav ───────────────────────────────────────────────────── */}
       <header className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200/50 dark:border-slate-800/50 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
-          {/* Logo */}
           <Link href="/" className="flex items-center gap-2 group shrink-0">
             <div className="bg-primary/10 p-1.5 rounded-xl group-hover:bg-primary/20 transition-colors">
               <Package className="w-5 h-5 text-primary" />
@@ -52,7 +54,6 @@ export default async function DashboardLayout({
             </span>
           </Link>
 
-          {/* Nav links (admin only) */}
           {isAdmin && (
             <nav className="hidden md:flex items-center gap-1">
               <Link href="/dashboard/admin">
@@ -70,11 +71,8 @@ export default async function DashboardLayout({
             </nav>
           )}
 
-          {/* ── Profile Card ──────────────────────────────────────────── */}
           <div className="flex items-center gap-3">
-            {/* Avatar + info */}
             <div className="flex items-center gap-3 bg-slate-100 dark:bg-slate-800 rounded-2xl pl-1.5 pr-4 py-1.5 border border-slate-200/70 dark:border-slate-700/70">
-              {/* Avatar circle */}
               <div
                 className={`w-9 h-9 rounded-xl flex items-center justify-center text-white text-sm font-black shadow-inner shrink-0 ${
                   isAdmin
@@ -85,7 +83,6 @@ export default async function DashboardLayout({
                 {initials}
               </div>
 
-              {/* Name + role */}
               <div className="hidden sm:block leading-none">
                 <p className="text-sm font-bold text-slate-900 dark:text-white leading-tight truncate max-w-[120px]">
                   {dbUser.name}
@@ -105,7 +102,6 @@ export default async function DashboardLayout({
               </div>
             </div>
 
-            {/* Switch dashboard (admin only, mobile) */}
             {isAdmin && (
               <Link href="/dashboard/admin" className="md:hidden">
                 <Button variant="outline" size="icon" className="rounded-full w-9 h-9 border-slate-200 dark:border-slate-700">
@@ -114,7 +110,6 @@ export default async function DashboardLayout({
               </Link>
             )}
 
-            {/* Logout */}
             <form action="/auth/signout" method="post">
               <Button
                 variant="ghost"
@@ -129,7 +124,6 @@ export default async function DashboardLayout({
           </div>
         </div>
 
-        {/* ── Mobile nav (admin only) ─────────────────────────────────── */}
         {isAdmin && (
           <div className="md:hidden border-t border-slate-100 dark:border-slate-800 flex">
             <Link href="/dashboard/admin" className="flex-1">

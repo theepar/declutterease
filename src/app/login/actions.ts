@@ -4,7 +4,6 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
 import { createClient } from '@/utils/supabase/server'
-import { prisma } from '@/lib/prisma'
 
 export async function login(formData: FormData) {
   const cookieStore = await cookies()
@@ -22,7 +21,6 @@ export async function login(formData: FormData) {
     return { error: error.message }
   }
 
-  // Redirect based on role if needed, or just to root
   revalidatePath('/', 'layout')
   redirect('/dashboard/penerima')
 }
@@ -50,19 +48,17 @@ export async function signup(formData: FormData) {
   }
 
   if (authData.user) {
-    // Sync with Prisma
+    // Sync with Supabase DB
     try {
-      await prisma.user.create({
-        data: {
-          id: authData.user.id,
-          email: email,
-          name: name || email.split('@')[0],
-          role: 'ADMIN' // default role — can access both admin & penerima views
-        }
+      const { error: dbError } = await supabase.from('User').insert({
+        id: authData.user.id,
+        email: email,
+        name: name || email.split('@')[0],
+        role: 'ADMIN' // default role
       })
+      if (dbError) throw dbError
     } catch (e) {
-      console.error("Error creating user in Prisma:", e)
-      // Ignore if user already exists
+      console.error("Error creating user in Supabase:", e)
     }
   }
 
