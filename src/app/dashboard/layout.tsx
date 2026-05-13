@@ -62,10 +62,10 @@ export default async function DashboardLayout({
                   Admin
                 </Button>
               </Link>
-              <Link href="/dashboard/penerima">
+              <Link href="/dashboard/user">
                 <Button variant="ghost" size="sm" className="rounded-full text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white gap-2 font-medium">
                   <Package className="w-4 h-4" />
-                  Penerima
+                  User
                 </Button>
               </Link>
             </nav>
@@ -133,7 +133,7 @@ export default async function DashboardLayout({
               </div>
             </Link>
             <div className="w-px bg-slate-100 dark:bg-slate-800" />
-            <Link href="/dashboard/penerima" className="flex-1">
+            <Link href="/dashboard/user" className="flex-1">
               <div className="flex items-center justify-center gap-2 py-2.5 text-sm font-semibold text-slate-600 dark:text-slate-400 hover:text-primary hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
                 <Package className="w-4 h-4" /> Katalog
                 <ChevronRight className="w-3 h-3 opacity-40" />

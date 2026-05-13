@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { ArrowRight, Package, Recycle, ShieldCheck, Zap } from 'lucide-react'
+import { ArrowRight, Package, Recycle, ShieldCheck, Zap, Sparkles } from 'lucide-react'
 
 export default function Home() {
   return (
@@ -75,7 +75,7 @@ export default function Home() {
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto">
               {/* Card 1 */}
               <div className="flex flex-col items-center text-center p-8 rounded-3xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
                 <div className="w-16 h-16 rounded-2xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mb-6 text-blue-600 dark:text-blue-400">
@@ -109,6 +109,17 @@ export default function Home() {
                 <h3 className="text-xl font-bold mb-3 text-slate-900 dark:text-white">Make an Impact</h3>
                 <p className="text-slate-500 dark:text-slate-400 leading-relaxed">
                   Coordinate pickup and feel great knowing your unwanted items are reducing landfill waste and helping others.
+                </p>
+              </div>
+
+              {/* Card 4 - New Cleaning Feature */}
+              <div className="flex flex-col items-center text-center p-8 rounded-3xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+                <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-6 text-primary">
+                  <Sparkles className="w-8 h-8" />
+                </div>
+                <h3 className="text-xl font-bold mb-3 text-slate-900 dark:text-white">Bebersih Kost</h3>
+                <p className="text-slate-500 dark:text-slate-400 leading-relaxed">
+                  Bukan cuma barang, kamu juga bisa booking slot pembersihan kost gratis untuk menjaga hunianmu tetap nyaman.
                 </p>
               </div>
             </div>

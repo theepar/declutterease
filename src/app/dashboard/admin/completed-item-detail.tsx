@@ -15,7 +15,7 @@ interface CompletedItemDetailProps {
     description: string
     receiptLocation: string | null
     review: string | null
-    penerima: { name: string | null } | null
+    user: { name: string | null } | null
     bookedAt: Date | null
   }
 }
@@ -67,9 +67,9 @@ export function CompletedItemDetail({ item }: CompletedItemDetailProps) {
                 <div className="space-y-4">
                   <div className="space-y-1">
                     <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
-                      <User className="w-3 h-3" /> Penerima
+                      <User className="w-3 h-3" /> User
                     </p>
-                    <p className="font-bold text-slate-900 dark:text-white">{item.penerima?.name || 'Anonim'}</p>
+                    <p className="font-bold text-slate-900 dark:text-white">{item.user?.name || 'Anonim'}</p>
                   </div>
                   <div className="space-y-1">
                     <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
@@ -83,7 +83,7 @@ export function CompletedItemDetail({ item }: CompletedItemDetailProps) {
 
                 <div className="space-y-1">
                   <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
-                    <MapPin className="w-3 h-3" /> Lokasi Penerimaan
+                    <MapPin className="w-3 h-3" /> Lokasi User
                   </p>
                   <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed font-medium">
                     {item.receiptLocation || 'Lokasi tidak tersedia'}
@@ -94,7 +94,7 @@ export function CompletedItemDetail({ item }: CompletedItemDetailProps) {
               {/* Review / Comment */}
               <div className="bg-slate-50 dark:bg-slate-950/50 p-6 rounded-[24px] border border-slate-100 dark:border-slate-800/50">
                 <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3 flex items-center gap-1.5">
-                  <MessageSquare className="w-3 h-3" /> Testimoni Penerima
+                  <MessageSquare className="w-3 h-3" /> Testimoni User
                 </p>
                 <p className="text-slate-700 dark:text-slate-300 italic text-sm leading-relaxed">
                   &quot;{item.review || 'Tidak ada komentar.'}&quot;

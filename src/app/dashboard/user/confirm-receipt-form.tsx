@@ -55,7 +55,7 @@ export function ConfirmReceiptForm({ itemId }: { itemId: string }) {
       <input type="hidden" name="itemId" value={itemId} />
 
       <p className="text-xs font-bold uppercase text-slate-500 tracking-wider mb-2">
-        Konfirmasi Penerimaan
+        Konfirmasi Terima
       </p>
 
       {/* Location field */}
@@ -67,7 +67,7 @@ export function ConfirmReceiptForm({ itemId }: { itemId: string }) {
               name="location"
               value={location}
               onChange={(e) => setLocation(e.target.value)}
-              placeholder="Lokasi penerimaan..."
+              placeholder="Lokasi kamu..."
               required
               className="pl-9 rounded-xl border-slate-200 dark:border-slate-800 h-11 text-sm"
             />

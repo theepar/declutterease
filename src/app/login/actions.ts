@@ -5,12 +5,16 @@ import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
 import { createClient } from '@/utils/supabase/server'
 
-export async function login(formData: FormData) {
+export async function login(prevState: unknown, formData: FormData) {
   const cookieStore = await cookies()
   const supabase = await createClient(cookieStore)
 
   const email = formData.get('email') as string
   const password = formData.get('password') as string
+
+  if (!email || !password) {
+    return { error: "Email and password are required" }
+  }
 
   const { error } = await supabase.auth.signInWithPassword({
     email,
@@ -22,16 +26,20 @@ export async function login(formData: FormData) {
   }
 
   revalidatePath('/', 'layout')
-  redirect('/dashboard/penerima')
+  redirect('/dashboard/user')
 }
 
-export async function signup(formData: FormData) {
+export async function signup(prevState: unknown, formData: FormData) {
   const cookieStore = await cookies()
   const supabase = await createClient(cookieStore)
 
   const email = formData.get('email') as string
   const password = formData.get('password') as string
   const name = formData.get('name') as string
+
+  if (!email || !password) {
+    return { error: "Email and password are required" }
+  }
 
   const { data: authData, error } = await supabase.auth.signUp({
     email,

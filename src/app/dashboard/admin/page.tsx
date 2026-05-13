@@ -10,10 +10,12 @@ import { DeleteItemButton } from './delete-button'
 import {
   PlusCircle, Package, Users,
   CheckCircle2, LayoutDashboard, Pencil, Clock, X, Inbox,
-  Search, ArrowRight
+  Search, ArrowRight, Home
 } from 'lucide-react'
-import { createDonationItem, updateDonationItem, deleteDonationItem } from './actions'
+import { createDonationItem, updateDonationItem, deleteDonationItem, createCleaningService, updateCleaningService, approveCleaningBooking, completeCleaningService, deleteCleaningService } from './actions'
 import { CompletedItemDetail } from './completed-item-detail'
+import { CalendarDays } from 'lucide-react'
+import { BookingButton } from '../user/booking-button'
 
 export default async function AdminDashboard({
   searchParams,
@@ -36,11 +38,11 @@ export default async function AdminDashboard({
     .eq('id', user.id)
     .single()
 
-  if (dbUser?.role !== 'ADMIN') redirect('/dashboard/penerima')
+  if (dbUser?.role !== 'ADMIN') redirect('/dashboard/user')
 
   let query = supabase
     .from('DonationItem')
-    .select('*, penerima:User(*)')
+    .select('*, user:User(*)')
     .order('createdAt', { ascending: false })
 
   if (search) {
@@ -58,6 +60,25 @@ export default async function AdminDashboard({
   const availableItems  = donations.filter((i) => i.status === 'AVAILABLE')
   const shippedItems    = donations.filter((i) => i.status === 'SHIPPED')
   const completedItems  = donations.filter((i) => i.status === 'COMPLETED')
+
+  // --- Cleaning Service Data ---
+  // We try a simpler select first to avoid join errors if the relationship is named differently
+  const { data: cleaningServicesData, error: cleaningError } = await supabase
+    .from('CleaningService')
+    .select('*, penerima:User(*)') // Changed from user:User(*) to penerima:User(*) as the column is likely penerima_id
+    .order('scheduled_at', { ascending: true })
+
+  if (cleaningError) {
+    console.error('Error fetching cleaning services:', {
+      message: cleaningError.message,
+      details: cleaningError.details,
+      hint: cleaningError.hint,
+      code: cleaningError.code
+    })
+  }
+  
+  const cleaningServices = cleaningServicesData || []
+  const editingService = editingId ? cleaningServices.find((s) => s.id === editingId) ?? null : null
 
 
 
@@ -90,9 +111,9 @@ export default async function AdminDashboard({
                   </div>
                 ))}
             </div>
-            <a href="/dashboard/penerima">
+            <a href="/dashboard/user">
               <Button variant="outline" className="w-full rounded-2xl bg-white/5 border-white/10 text-white hover:bg-white/10 gap-2 border-dashed">
-                Lihat POV Penerima <ArrowRight className="w-4 h-4" />
+                Lihat POV User <ArrowRight className="w-4 h-4" />
               </Button>
             </a>
           </div>
@@ -104,7 +125,7 @@ export default async function AdminDashboard({
 
         {/* Left — Form Panel */}
         <div className="lg:col-span-4 lg:sticky lg:top-6">
-          {editingItem ? (
+          {editingItem && (
             <div className="bg-white dark:bg-slate-900 rounded-3xl border border-amber-200 dark:border-amber-800/40 shadow-xl overflow-hidden">
               <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/10 border-b border-amber-100 dark:border-amber-900/30 px-6 py-5 flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
@@ -140,7 +161,45 @@ export default async function AdminDashboard({
                 </form>
               </div>
             </div>
-          ) : (
+          )}
+
+          {editingService && (
+            <div className="bg-white dark:bg-slate-900 rounded-3xl border border-blue-200 dark:border-blue-800/40 shadow-xl overflow-hidden">
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/10 border-b border-blue-100 dark:border-blue-900/30 px-6 py-5 flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center">
+                    <Pencil className="w-4 h-4 text-blue-600" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-slate-900 dark:text-white leading-tight">Edit Jadwal Bebersih</p>
+                    <p className="text-xs text-slate-500">Ubah jadwal pembersihan</p>
+                  </div>
+                </div>
+                <a href="/dashboard/admin">
+                  <Button variant="ghost" size="icon" className="rounded-full h-8 w-8 text-slate-400 hover:text-slate-700">
+                    <X className="w-4 h-4" />
+                  </Button>
+                </a>
+              </div>
+              <div className="p-6">
+                <form action={updateCleaningService} className="space-y-4">
+                  <input type="hidden" name="serviceId" value={editingService.id} />
+                  <FormField label="Deskripsi Layanan" id="edit-clean-desc">
+                    <Input id="edit-clean-desc" name="description" defaultValue={editingService.description} required className="rounded-xl h-11" />
+                  </FormField>
+                  <FormField label="Jadwal (Tanggal & Waktu)" id="edit-clean-date">
+                    <Input id="edit-clean-date" name="scheduled_at" type="datetime-local" defaultValue={new Date(new Date(editingService.scheduled_at).getTime() - (new Date(editingService.scheduled_at).getTimezoneOffset() * 60000)).toISOString().slice(0, 16)} required className="rounded-xl h-11" />
+                  </FormField>
+                  <Button type="submit" className="w-full rounded-xl h-11 font-bold bg-blue-500 hover:bg-blue-600 text-white shadow-lg shadow-blue-200/50 dark:shadow-blue-900/20">
+                    Simpan Perubahan
+                  </Button>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {!editingItem && !editingService && (
+            <>
             <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden">
               <div className="bg-gradient-to-r from-slate-50 to-slate-100/50 dark:from-slate-950/50 dark:to-slate-900 border-b border-slate-100 dark:border-slate-800 px-6 py-5 flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">
@@ -162,12 +221,34 @@ export default async function AdminDashboard({
                   <FormField label="Deskripsi" id="description">
                     <Textarea id="description" name="description" placeholder="Ceritakan sedikit tentang barang ini..." required className="rounded-xl min-h-[90px] border-slate-200 dark:border-slate-800" />
                   </FormField>
-                  <Button type="submit" className="w-full rounded-xl h-11 font-bold shadow-lg shadow-primary/20">
-                    Publikasikan Barang
-                  </Button>
+                  <BookingButton label="Publikasikan Barang" />
                 </form>
               </div>
             </div>
+
+            <div className="mt-8 bg-white dark:bg-slate-900 rounded-3xl border border-primary/20 dark:border-primary/20 shadow-xl overflow-hidden">
+              <div className="bg-gradient-to-r from-primary/5 to-blue-500/5 dark:from-primary/10 dark:to-blue-900/10 border-b border-primary/10 dark:border-primary/90 px-6 py-5 flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                  <Home className="w-4 h-4" />
+                </div>
+                <div>
+                  <p className="font-bold text-slate-900 dark:text-white leading-tight">Slot Bebersih Kost</p>
+                  <p className="text-xs text-slate-500">Tambah jadwal pembersihan</p>
+                </div>
+              </div>
+              <div className="p-6">
+                <form action={createCleaningService} className="space-y-4">
+                  <FormField label="Deskripsi Layanan" id="clean-desc">
+                    <Input id="clean-desc" name="description" placeholder="Contoh: Pembersihan kamar & kamar mandi" required className="rounded-xl h-11 border-slate-200 dark:border-slate-800" />
+                  </FormField>
+                  <FormField label="Jadwal (Tanggal & Waktu)" id="clean-date">
+                    <Input id="clean-date" name="scheduled_at" type="datetime-local" required className="rounded-xl h-11 border-slate-200 dark:border-slate-800" />
+                  </FormField>
+                  <BookingButton label="Tambah Slot Jadwal" />
+                </form>
+              </div>
+            </div>
+            </>
           )}
         </div>
 
@@ -235,10 +316,10 @@ export default async function AdminDashboard({
                           <StatusBadge status={item.status} />
                         </div>
                         <p className="text-sm text-slate-500 truncate">{item.description}</p>
-                        {item.penerima && (
+                        {item.user && (
                           <div className="flex items-center gap-1.5 mt-1 text-xs text-slate-400">
                             <Users className="w-3 h-3" />
-                            <span>{item.penerima.name}</span>
+                            <span>{item.user.name}</span>
                             {item.bookedAt && (
                               <>
                                 <span>·</span>
@@ -288,7 +369,7 @@ export default async function AdminDashboard({
                       <p className="font-semibold text-slate-800 dark:text-slate-200 text-sm">{item.category}</p>
                       <div className="flex items-center gap-1.5 text-xs text-slate-400 mt-0.5">
                         <Users className="w-3 h-3" />
-                        <span>{item.penerima?.name}</span>
+                        <span>{item.user?.name}</span>
                         {item.review && (
                           <>
                             <span>·</span>
@@ -305,6 +386,96 @@ export default async function AdminDashboard({
               </div>
             </section>
           )}
+
+          {/* --- Cleaning Service Management --- */}
+          <section className="space-y-5">
+              <SectionHeader
+                icon={<Home className="w-4 h-4 text-primary" />}
+                iconBg="bg-primary/10"
+                title="Manajemen Bebersih Kost"
+              badge={`${cleaningServices.length} slots`}
+              badgeColor="bg-primary/10 text-primary"
+            />
+
+            {cleaningServices.length === 0 ? (
+              <div className="bg-white dark:bg-slate-900 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-3xl p-10 text-center">
+                <CalendarDays className="w-10 h-10 text-slate-300 mx-auto mb-3" />
+                <p className="text-slate-500 font-medium text-sm">Belum ada jadwal pembersihan.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-4">
+                {cleaningServices.map((service) => (
+                  <div key={service.id} className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="flex items-center gap-4">
+                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${
+                        service.status === 'AVAILABLE' ? 'bg-green-50 text-green-600' :
+                        service.status === 'PENDING' ? 'bg-amber-50 text-amber-600' :
+                        service.status === 'APPROVED' ? 'bg-blue-50 text-blue-600' :
+                        'bg-slate-50 text-slate-400'
+                      }`}>
+                        <Home className="w-6 h-6" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-bold text-slate-900 dark:text-white">{service.description}</h4>
+                          <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-md ${
+                             service.status === 'AVAILABLE' ? 'bg-green-100 text-green-700' :
+                             service.status === 'PENDING' ? 'bg-amber-100 text-amber-700' :
+                             service.status === 'APPROVED' ? 'bg-blue-100 text-blue-700' :
+                             'bg-slate-100 text-slate-600'
+                          }`}>
+                            {service.status === 'AVAILABLE' ? 'Tersedia' : service.status === 'PENDING' ? 'Perlu ACC' : service.status === 'APPROVED' ? 'Disetujui' : 'Selesai'}
+                          </span>
+                        </div>
+                        <p className="text-sm text-slate-500">
+                          {new Date(service.scheduled_at).toLocaleString('id-ID', { dateStyle: 'long', timeStyle: 'short' })}
+                        </p>
+                        {service.penerima && (
+                          <p className="text-xs text-primary font-semibold mt-1">Dipesan oleh: {service.penerima.name}</p>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-2">
+                      {service.status === 'PENDING' && (
+                        <form action={approveCleaningBooking}>
+                          <input type="hidden" name="serviceId" value={service.id} />
+                          <BookingButton 
+                            label="ACC Sekarang" 
+                            size="sm" 
+                            className="bg-amber-500 hover:bg-amber-600 text-white rounded-xl px-4 font-bold h-9 flex items-center justify-center gap-2"
+                          />
+                        </form>
+                      )}
+                      {service.status === 'APPROVED' && (
+                        <form action={completeCleaningService}>
+                          <input type="hidden" name="serviceId" value={service.id} />
+                          <BookingButton 
+                            label="Selesaikan" 
+                            size="sm" 
+                            className="bg-green-500 hover:bg-green-600 text-white rounded-xl px-4 font-bold h-9 flex items-center justify-center gap-2"
+                          />
+                        </form>
+                      )}
+                      {service.status === 'AVAILABLE' && (
+                        <a href={`/dashboard/admin?edit=${service.id}`}>
+                          <Button variant="ghost" size="icon" className="rounded-full w-9 h-9 text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20">
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+                        </a>
+                      )}
+                      <form action={deleteCleaningService}>
+                        <input type="hidden" name="serviceId" value={service.id} />
+                        <Button variant="ghost" size="icon" className="text-slate-400 hover:text-red-500">
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </form>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
         </div>
       </div>
     </div>
